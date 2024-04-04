@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  ci:
+    name: Run CI
+    runs-on: ubuntu-latest
+
+    steps:
+
+    - name: check out code
+      uses: actions/checkout@v4
+
+    - name: cargo version and environment
+      id: vars
+      run: |
+        printf "Using cargo at: $(which cargo)\n"
+        printf "cargo version: $(cargo version)\n"
+
+    - name: setup rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: run build
+      run: |
+        cargo check --verbose
+        cargo build --release --verbose
+
+    - name: run tests
+      run: cargo test --verbose
