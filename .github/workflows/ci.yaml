@@ -22,13 +22,13 @@ jobs:
         printf "Using cargo at: $(which cargo)\n"
         printf "cargo version: $(cargo version)\n"
 
-  - name: setup rust toolchain
-    uses: dtolnay/rust-toolchain@stable
+    - name: setup rust toolchain
+      uses: dtolnay/rust-toolchain@stable
 
-  - name: run build
-    run: |
-      cargo check --verbose
-      cargo build --release --verbose
+    - name: run build
+      run: |
+        cargo check --verbose
+        cargo build --release --verbose
 
-  - name: run tests
-    run: cargo test --verbose
+    - name: run tests
+      run: cargo test --verbose
