@@ -11,6 +11,9 @@ env:
 
 jobs:
   ci:
+    name: Run CI
+    runs-on: ubuntu-latest
+
     steps:
 
     - name: check out code
