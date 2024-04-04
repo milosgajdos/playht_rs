@@ -12,3 +12,10 @@ keywords = ["playht", "play.ht", "tts", "text-to-speech", "voice-clone", "ai"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+reqwest = { version = "0.12", features = ["json"] }
+tokio = { version = "1", features = ["full"] }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "=1.0"
+thiserror = "1.0.58"
+http-body = "1.0.0"
+http-body-util = "0.1.1"
