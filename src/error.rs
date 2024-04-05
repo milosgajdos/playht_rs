@@ -1,11 +1,19 @@
-// TODO: this will be used for
-// deserializing errors
-#[allow(unused)]
-use serde_json::Value;
+use serde::{self, Deserialize};
 use thiserror;
 
-#[derive(thiserror::Error, Debug)]
+#[derive(Debug, thiserror::Error, Deserialize)]
 pub enum Error {
     #[error("Client build error: {0}")]
     ClientBuildError(String),
+    #[error("API error: {error_message} ({error_id})")]
+    APIError {
+        error_message: String,
+        error_id: String,
+    },
+}
+
+#[derive(Debug, Deserialize)]
+pub struct APIError {
+    pub error_message: String,
+    pub error_id: String,
 }

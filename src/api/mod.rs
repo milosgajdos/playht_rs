@@ -1,17 +1,21 @@
-use crate::error::Error;
-use crate::prelude::*;
-use reqwest::header::{self, HeaderMap, HeaderName, HeaderValue};
-use reqwest::{Body, Method, Request, Response, Url};
+pub mod voice;
+
+use crate::{error::*, prelude::*};
+use reqwest::{
+    header::{HeaderMap, HeaderName, HeaderValue, AUTHORIZATION, CONTENT_TYPE, USER_AGENT},
+    Body, Method, Request, Response, Url,
+};
 use std::env;
+use voice::Voice;
 
 const BASE_URL: &str = "https://api.play.ht/api";
-const V2_PATH: &str = "v2";
+const V2_PATH: &str = "/v2";
 // TODO: this is used for gRPC streaming
 // Remove this attribute once implemented.
 #[allow(unused)]
-const V1_PATH: &str = "v1";
+const V1_PATH: &str = "/v1";
 const USER_ID_HEADER: &str = "X-USER-ID";
-const USER_AGENT: &str = "milosgajdos/playht_rs";
+const CLIENT_USER_AGENT: &str = "milosgajdos/playht_rs";
 
 #[derive(Debug)]
 pub struct Client {
@@ -43,6 +47,26 @@ impl Client {
 
         Ok(resp)
     }
+
+    pub async fn get_voices(&self) -> Result<Vec<Voice>> {
+        let resp = self
+            .client
+            .get(self.url.as_str())
+            .header(CONTENT_TYPE, APPLICATION_JSON_HEADER)
+            .send()
+            .await?;
+
+        if resp.status().is_success() {
+            let voices: Vec<Voice> = resp.json().await?;
+            Ok(voices)
+        } else {
+            let api_error: APIError = resp.json().await?;
+            Err(Box::new(Error::APIError {
+                error_message: api_error.error_message,
+                error_id: api_error.error_id,
+            }))
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -71,7 +95,7 @@ impl ClientBuilder {
     }
 
     pub fn path(mut self, path: impl Into<String>) -> Result<Self> {
-        let url = format!("{}/{}", self.url.unwrap(), path.into()).parse::<Url>()?;
+        let url = format!("{}{}", self.url.unwrap(), path.into()).parse::<Url>()?;
         self.url = Some(url);
 
         Ok(self)
@@ -103,16 +127,16 @@ impl Default for ClientBuilder {
         let mut headers = HeaderMap::new();
         if let Ok(secret_key) = env::var("PLAYHT_SECRET_KEY") {
             headers.append(
-                header::AUTHORIZATION.as_str(),
+                AUTHORIZATION.as_str(),
                 HeaderValue::from_str(&secret_key).unwrap(),
             );
         }
         if let Ok(user_id) = env::var("PLAYHT_USER_ID") {
             headers.append(USER_ID_HEADER, HeaderValue::from_str(&user_id).unwrap());
         }
-        headers.append(header::USER_AGENT, HeaderValue::from_static(USER_AGENT));
+        headers.append(USER_AGENT, HeaderValue::from_static(CLIENT_USER_AGENT));
 
-        let url = format!("{}/{}", BASE_URL, V2_PATH).parse::<Url>().ok();
+        let url = format!("{}{}", BASE_URL, V2_PATH).parse::<Url>().ok();
 
         let client = reqwest::Client::new();
 
