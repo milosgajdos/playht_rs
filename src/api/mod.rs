@@ -6,7 +6,7 @@ use reqwest::{
     Body, Method, Request, Response, Url,
 };
 use std::env;
-use voice::Voice;
+use voice::{Voice, PATH as VOICES_PATH};
 
 const BASE_URL: &str = "https://api.play.ht/api";
 const V2_PATH: &str = "/v2";
@@ -25,6 +25,17 @@ pub struct Client {
 }
 
 impl Client {
+    pub fn new() -> Self {
+        // NOTE: unwrap is warranted because default()
+        // only sets up default configuration which
+        // must contain valid client configurtion.
+        let c = ClientBuilder::default().build().unwrap();
+        for (name, value) in &c.headers {
+            println!("{}:{:?}", name, value);
+        }
+        c
+    }
+
     pub fn remote_address(&self) -> String {
         let host = self.url.host().unwrap();
         let addr = format!("{}:{}", host, "443");
@@ -49,9 +60,11 @@ impl Client {
     }
 
     pub async fn get_voices(&self) -> Result<Vec<Voice>> {
+        let voices_url = format!("{}{}", self.url.as_str(), VOICES_PATH);
         let resp = self
             .client
-            .get(self.url.as_str())
+            .get(voices_url)
+            .headers(self.headers.clone())
             .header(CONTENT_TYPE, APPLICATION_JSON_HEADER)
             .send()
             .await?;

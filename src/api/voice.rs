@@ -3,7 +3,7 @@ use bytes::Bytes;
 use reqwest::{header::CONTENT_TYPE, Method};
 use serde::{Deserialize, Serialize};
 
-const PATH: &str = "/voices";
+pub const PATH: &str = "/voices";
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Voice {
