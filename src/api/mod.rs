@@ -11,9 +11,11 @@ const V2_PATH: &str = "v2";
 #[allow(unused)]
 const V1_PATH: &str = "v1";
 const USER_ID_HEADER: &str = "X-USER-ID";
+const USER_AGENT: &str = "milosgajdos/playht_rs";
 
 #[derive(Debug)]
 pub struct Client {
+    client: reqwest::Client,
     pub url: Url,
     pub headers: HeaderMap,
 }
@@ -27,8 +29,7 @@ impl Client {
     }
 
     pub fn build_request<T: Into<Body>>(&self, method: Method, body: T) -> Result<Request> {
-        let reqw_client = reqwest::Client::new();
-        let mut req_builder = reqw_client.request(method, self.url.clone());
+        let mut req_builder = self.client.request(method, self.url.clone());
         for (name, value) in &self.headers {
             req_builder = req_builder.header(name, value);
         }
@@ -38,8 +39,7 @@ impl Client {
     }
 
     pub async fn send_request(&self, req: Request) -> Result<Response> {
-        let client = reqwest::Client::new();
-        let resp = client.execute(req).await?;
+        let resp = self.client.execute(req).await?;
 
         Ok(resp)
     }
@@ -47,19 +47,14 @@ impl Client {
 
 #[derive(Debug)]
 pub struct ClientBuilder {
+    client: Option<reqwest::Client>,
     url: Option<Url>,
     headers: Option<HeaderMap>,
 }
 
 impl ClientBuilder {
     pub fn new() -> Result<Self> {
-        let mut cb = ClientBuilder::default();
-        let secret_key = env::var("PLAYHT_SECRET_KEY")?;
-        cb = cb.header(header::AUTHORIZATION.as_str(), &secret_key)?;
-        let user_id = env::var("PLAYHT_USER_ID")?;
-        cb = cb.header(USER_ID_HEADER, &user_id)?;
-        let url = format!("{}/{}", BASE_URL, V2_PATH).parse::<Url>()?;
-        cb.url = Some(url);
+        let cb = ClientBuilder::default();
 
         Ok(cb)
     }
@@ -82,6 +77,12 @@ impl ClientBuilder {
         Ok(self)
     }
 
+    pub fn req_client<T: Into<reqwest::Client>>(mut self, client: T) -> Result<Self> {
+        self.client = Some(client.into());
+
+        Ok(self)
+    }
+
     pub fn build(self) -> Result<Client> {
         let Some(url) = self.url else {
             return Err(Box::new(Error::ClientBuildError(
@@ -91,6 +92,7 @@ impl ClientBuilder {
 
         Ok(Client {
             url,
+            client: self.client.unwrap(),
             headers: self.headers.unwrap(),
         })
     }
@@ -98,9 +100,29 @@ impl ClientBuilder {
 
 impl Default for ClientBuilder {
     fn default() -> Self {
+        let mut headers = HeaderMap::new();
+        if let Ok(secret_key) = env::var("PLAYHT_SECRET_KEY") {
+            headers.append(
+                header::AUTHORIZATION.as_str(),
+                HeaderValue::from_str(&secret_key).unwrap(),
+            );
+        }
+        if let Ok(user_id) = env::var("PLAYHT_USER_ID") {
+            headers.append(USER_ID_HEADER, HeaderValue::from_str(&user_id).unwrap());
+        }
+        headers.append(header::USER_AGENT, HeaderValue::from_static(USER_AGENT));
+
+        let url = match format!("{}/{}", BASE_URL, V2_PATH).parse::<Url>() {
+            Ok(url) => Some(url),
+            Err(_) => None,
+        };
+
+        let client = reqwest::Client::new();
+
         Self {
-            url: None,
-            headers: Some(HeaderMap::new()),
+            url,
+            client: Some(client),
+            headers: Some(headers),
         }
     }
 }
