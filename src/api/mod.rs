@@ -112,10 +112,7 @@ impl Default for ClientBuilder {
         }
         headers.append(header::USER_AGENT, HeaderValue::from_static(USER_AGENT));
 
-        let url = match format!("{}/{}", BASE_URL, V2_PATH).parse::<Url>() {
-            Ok(url) => Some(url),
-            Err(_) => None,
-        };
+        let url = format!("{}/{}", BASE_URL, V2_PATH).parse::<Url>().ok();
 
         let client = reqwest::Client::new();
 
