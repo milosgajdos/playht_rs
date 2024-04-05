@@ -67,9 +67,6 @@ pub async fn get_voices() -> Result<Vec<Voice>> {
         Ok(voices)
     } else {
         let api_error: APIError = resp.json().await?;
-        Err(Box::new(Error::APIError {
-            error_message: api_error.error_message,
-            error_id: api_error.error_id,
-        }))
+        Err(Box::new(Error::APIError(api_error)))
     }
 }

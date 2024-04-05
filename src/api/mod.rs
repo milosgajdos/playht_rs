@@ -14,6 +14,7 @@ const V2_PATH: &str = "/v2";
 // Remove this attribute once implemented.
 #[allow(unused)]
 const V1_PATH: &str = "/v1";
+
 const USER_ID_HEADER: &str = "X-USER-ID";
 const CLIENT_USER_AGENT: &str = "milosgajdos/playht_rs";
 
@@ -30,9 +31,7 @@ impl Client {
         // only sets up default configuration which
         // must contain valid client configurtion.
         let c = ClientBuilder::default().build().unwrap();
-        for (name, value) in &c.headers {
-            println!("{}:{:?}", name, value);
-        }
+
         c
     }
 
@@ -74,10 +73,7 @@ impl Client {
             Ok(voices)
         } else {
             let api_error: APIError = resp.json().await?;
-            Err(Box::new(Error::APIError {
-                error_message: api_error.error_message,
-                error_id: api_error.error_id,
-            }))
+            Err(Box::new(Error::APIError(api_error)))
         }
     }
 }

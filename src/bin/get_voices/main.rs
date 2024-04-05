@@ -10,9 +10,7 @@ async fn main() -> Result<()> {
 
     println!("Got {} voices", voices.len());
 
-    let c = api::Client::new();
-
-    let voices = c.get_voices().await?;
+    let voices = api::Client::new().get_voices().await?;
 
     println!("Got {} voices", voices.len());
 
