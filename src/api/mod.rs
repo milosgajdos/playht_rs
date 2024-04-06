@@ -1,17 +1,27 @@
-use crate::error::Error;
-use crate::prelude::*;
-use reqwest::header::{self, HeaderMap, HeaderName, HeaderValue};
-use reqwest::{Body, Method, Request, Response, Url};
+pub mod voice;
+
+use crate::{error::*, prelude::*};
+use reqwest::{
+    header::{HeaderMap, HeaderName, HeaderValue, ACCEPT, AUTHORIZATION, CONTENT_TYPE, USER_AGENT},
+    multipart, Body, Method, Request, Response, Url,
+};
 use std::env;
+use voice::{
+    CloneVoiceFileRequest, CloneVoiceURLRequest, ClonedVoice, Voice, CLONED_VOICES_INSTANT_PATH,
+    CLONED_VOICES_PATH, VOICES_PATH,
+};
+
+use self::voice::{DeleteClonedVoiceRequest, DeleteClonedVoiceResp};
 
 const BASE_URL: &str = "https://api.play.ht/api";
-const V2_PATH: &str = "v2";
+const V2_PATH: &str = "/v2";
 // TODO: this is used for gRPC streaming
 // Remove this attribute once implemented.
 #[allow(unused)]
-const V1_PATH: &str = "v1";
+const V1_PATH: &str = "/v1";
+
 const USER_ID_HEADER: &str = "X-USER-ID";
-const USER_AGENT: &str = "milosgajdos/playht_rs";
+const CLIENT_USER_AGENT: &str = "milosgajdos/playht_rs";
 
 #[derive(Debug)]
 pub struct Client {
@@ -21,6 +31,15 @@ pub struct Client {
 }
 
 impl Client {
+    pub fn new() -> Self {
+        // NOTE: unwrap is warranted because default()
+        // only sets up default configuration which
+        // must contain valid client configurtion.
+        let c = ClientBuilder::default().build().unwrap();
+
+        c
+    }
+
     pub fn remote_address(&self) -> String {
         let host = self.url.host().unwrap();
         let addr = format!("{}:{}", host, "443");
@@ -42,6 +61,123 @@ impl Client {
         let resp = self.client.execute(req).await?;
 
         Ok(resp)
+    }
+
+    pub async fn get_stock_voices(&self) -> Result<Vec<Voice>> {
+        let voices_url = format!("{}{}", self.url.as_str(), VOICES_PATH);
+        let resp = self
+            .client
+            .get(voices_url)
+            .headers(self.headers.clone())
+            .header(CONTENT_TYPE, APPLICATION_JSON)
+            .send()
+            .await?;
+
+        if resp.status().is_success() {
+            let voices: Vec<Voice> = resp.json().await?;
+            return Ok(voices);
+        }
+
+        let api_error: APIError = resp.json().await?;
+        Err(Box::new(Error::APIError(api_error)))
+    }
+
+    pub async fn get_cloned_voices(&self) -> Result<Vec<ClonedVoice>> {
+        let voices_url = format!("{}{}", self.url.as_str(), CLONED_VOICES_PATH);
+        let resp = self
+            .client
+            .get(voices_url)
+            .headers(self.headers.clone())
+            .header(CONTENT_TYPE, APPLICATION_JSON)
+            .send()
+            .await?;
+
+        if resp.status().is_success() {
+            let voices: Vec<ClonedVoice> = resp.json().await?;
+            return Ok(voices);
+        }
+
+        let api_error: APIError = resp.json().await?;
+        Err(Box::new(Error::APIError(api_error)))
+    }
+
+    pub async fn clone_voice_from_file(&self, req: CloneVoiceFileRequest) -> Result<ClonedVoice> {
+        let voice_name_part = multipart::Part::text(req.voice_name).mime_str(TEXT_PLAIN)?;
+        let sample_file_part = multipart::Part::bytes(std::fs::read(&req.sample_file)?)
+            .file_name(req.sample_file)
+            .mime_str(&req.mime_type)?;
+
+        let form = multipart::Form::new()
+            .part("voice_name", voice_name_part)
+            .part("sample_file", sample_file_part);
+
+        let clone_voice_url = format!("{}{}", self.url.as_str(), CLONED_VOICES_INSTANT_PATH);
+        let resp = self
+            .client
+            .post(clone_voice_url)
+            .headers(self.headers.clone())
+            .header(ACCEPT, APPLICATION_JSON)
+            .header(
+                CONTENT_TYPE,
+                format!("{}; boundary={}", MULTIPART_FORM, form.boundary()),
+            )
+            .multipart(form)
+            .send()
+            .await?;
+
+        if resp.status().is_success() {
+            let voice: ClonedVoice = resp.json().await?;
+            return Ok(voice);
+        }
+
+        let api_error: APIError = resp.json().await?;
+        Err(Box::new(Error::APIError(api_error)))
+    }
+
+    pub async fn clone_voice_from_url(&self, req: CloneVoiceURLRequest) -> Result<ClonedVoice> {
+        let body = serde_json::to_string(&req)?;
+        let clone_voice_url = format!("{}{}", self.url.as_str(), CLONED_VOICES_PATH);
+        let resp = self
+            .client
+            .post(clone_voice_url)
+            .headers(self.headers.clone())
+            .header(ACCEPT, APPLICATION_JSON)
+            .body(body)
+            .send()
+            .await?;
+
+        if resp.status().is_success() {
+            let voice: ClonedVoice = resp.json().await?;
+            return Ok(voice);
+        }
+
+        let api_error: APIError = resp.json().await?;
+        Err(Box::new(Error::APIError(api_error)))
+    }
+
+    pub async fn delete_cloned_voice(
+        &self,
+        req: DeleteClonedVoiceRequest,
+    ) -> Result<DeleteClonedVoiceResp> {
+        let body = serde_json::to_string(&req)?;
+        let clone_voice_url = format!("{}{}", self.url.as_str(), CLONED_VOICES_PATH);
+        let resp = self
+            .client
+            .delete(clone_voice_url)
+            .body(body)
+            .headers(self.headers.clone())
+            .header(CONTENT_TYPE, APPLICATION_JSON)
+            .header(ACCEPT, APPLICATION_JSON)
+            .send()
+            .await?;
+
+        if resp.status().is_success() {
+            let del_resp: DeleteClonedVoiceResp = resp.json().await?;
+            return Ok(del_resp);
+        }
+
+        let api_error: APIError = resp.json().await?;
+        Err(Box::new(Error::APIError(api_error)))
     }
 }
 
@@ -71,7 +207,7 @@ impl ClientBuilder {
     }
 
     pub fn path(mut self, path: impl Into<String>) -> Result<Self> {
-        let url = format!("{}/{}", self.url.unwrap(), path.into()).parse::<Url>()?;
+        let url = format!("{}{}", self.url.unwrap(), path.into()).parse::<Url>()?;
         self.url = Some(url);
 
         Ok(self)
@@ -103,16 +239,16 @@ impl Default for ClientBuilder {
         let mut headers = HeaderMap::new();
         if let Ok(secret_key) = env::var("PLAYHT_SECRET_KEY") {
             headers.append(
-                header::AUTHORIZATION.as_str(),
+                AUTHORIZATION.as_str(),
                 HeaderValue::from_str(&secret_key).unwrap(),
             );
         }
         if let Ok(user_id) = env::var("PLAYHT_USER_ID") {
             headers.append(USER_ID_HEADER, HeaderValue::from_str(&user_id).unwrap());
         }
-        headers.append(header::USER_AGENT, HeaderValue::from_static(USER_AGENT));
+        headers.append(USER_AGENT, HeaderValue::from_static(CLIENT_USER_AGENT));
 
-        let url = format!("{}/{}", BASE_URL, V2_PATH).parse::<Url>().ok();
+        let url = format!("{}{}", BASE_URL, V2_PATH).parse::<Url>().ok();
 
         let client = reqwest::Client::new();
 
