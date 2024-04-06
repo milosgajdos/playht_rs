@@ -10,11 +10,9 @@ use reqwest::{
 };
 use std::env;
 use voice::{
-    CloneVoiceFileRequest, CloneVoiceURLRequest, ClonedVoice, Voice, CLONED_VOICES_INSTANT_PATH,
-    CLONED_VOICES_PATH, VOICES_PATH,
+    CloneVoiceFileRequest, CloneVoiceURLRequest, ClonedVoice, DeleteClonedVoiceRequest,
+    DeleteClonedVoiceResp, Voice, CLONED_VOICES_INSTANT_PATH, CLONED_VOICES_PATH, VOICES_PATH,
 };
-
-use self::voice::{DeleteClonedVoiceRequest, DeleteClonedVoiceResp};
 
 const BASE_URL: &str = "https://api.play.ht/api";
 const V2_PATH: &str = "/v2";
@@ -222,6 +220,26 @@ impl Client {
 
         let api_error: APIError = resp.json().await?;
         Err(Box::new(Error::APIError(api_error)))
+    }
+
+    pub async fn stream_tts_job_progress<W>(&self, w: &mut W, id: String) -> Result<()>
+    where
+        W: tokio::io::AsyncWriteExt + Unpin,
+    {
+        let tts_job_url = format!("{}{}/{}", self.url.as_str(), TTS_JOB_PATH, id);
+        let mut resp = self
+            .client
+            .get(tts_job_url)
+            .headers(self.headers.clone())
+            .header(ACCEPT, TEXT_EVENT_STREAM)
+            .send()
+            .await?;
+
+        while let Some(chunk) = resp.chunk().await? {
+            w.write_all(&chunk).await?;
+        }
+
+        Ok(())
     }
 }
 
