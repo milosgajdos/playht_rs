@@ -89,3 +89,10 @@ pub async fn create_tts_job(req: TTSJobReq) -> Result<TTSJob> {
 
     Ok(tts_job)
 }
+
+/// Get an existing TTS job.
+pub async fn get_tts_job(id: String) -> Result<TTSJob> {
+    let tts_job = Client::new().get_tts_job(id).await?;
+
+    Ok(tts_job)
+}
