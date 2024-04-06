@@ -1,6 +1,9 @@
+pub mod job;
+pub mod tts;
 pub mod voice;
 
 use crate::{error::*, prelude::*};
+use job::{TTSJob, TTSJobReq, TTS_JOB_PATH};
 use reqwest::{
     header::{HeaderMap, HeaderName, HeaderValue, ACCEPT, AUTHORIZATION, CONTENT_TYPE, USER_AGENT},
     multipart, Body, Method, Request, Response, Url,
@@ -174,6 +177,47 @@ impl Client {
         if resp.status().is_success() {
             let del_resp: DeleteClonedVoiceResp = resp.json().await?;
             return Ok(del_resp);
+        }
+
+        let api_error: APIError = resp.json().await?;
+        Err(Box::new(Error::APIError(api_error)))
+    }
+
+    pub async fn create_tts_job(&self, req: TTSJobReq) -> Result<TTSJob> {
+        let body = serde_json::to_string(&req)?;
+        let tts_job_url = format!("{}{}", self.url.as_str(), TTS_JOB_PATH);
+        let resp = self
+            .client
+            .post(tts_job_url)
+            .body(body)
+            .headers(self.headers.clone())
+            .header(CONTENT_TYPE, APPLICATION_JSON)
+            .header(ACCEPT, APPLICATION_JSON)
+            .send()
+            .await?;
+
+        if resp.status().is_success() {
+            let tts_job: TTSJob = resp.json().await?;
+            return Ok(tts_job);
+        }
+
+        let api_error: APIError = resp.json().await?;
+        Err(Box::new(Error::APIError(api_error)))
+    }
+
+    pub async fn get_tts_job(&self, id: String) -> Result<TTSJob> {
+        let tts_job_url = format!("{}{}/{}", self.url.as_str(), TTS_JOB_PATH, id);
+        let resp = self
+            .client
+            .get(tts_job_url)
+            .headers(self.headers.clone())
+            .header(CONTENT_TYPE, APPLICATION_JSON)
+            .send()
+            .await?;
+
+        if resp.status().is_success() {
+            let tts_job: TTSJob = resp.json().await?;
+            return Ok(tts_job);
         }
 
         let api_error: APIError = resp.json().await?;
