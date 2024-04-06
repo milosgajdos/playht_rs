@@ -8,7 +8,10 @@
 //!
 
 pub use crate::api::{
-    job::{create_tts_job, get_tts_job},
+    job::{
+        create_tts_job, create_tts_job_with_progress_stream, get_tts_job, stream_tts_job_audio,
+        stream_tts_job_progress,
+    },
     voice::{
         clone_voice_from_file, clone_voice_from_url, delete_cloned_voice, get_cloned_voices,
         get_stock_voices,

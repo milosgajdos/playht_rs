@@ -5,7 +5,10 @@ pub mod voice;
 use crate::{error::*, prelude::*};
 use job::{TTSJob, TTSJobReq, TTS_JOB_PATH};
 use reqwest::{
-    header::{HeaderMap, HeaderName, HeaderValue, ACCEPT, AUTHORIZATION, CONTENT_TYPE, USER_AGENT},
+    header::{
+        HeaderMap, HeaderName, HeaderValue, ACCEPT, AUTHORIZATION, CONTENT_LOCATION, CONTENT_TYPE,
+        USER_AGENT,
+    },
     multipart, Body, Method, Request, Response, Url,
 };
 use std::env;
@@ -203,6 +206,38 @@ impl Client {
         Err(Box::new(Error::APIError(api_error)))
     }
 
+    pub async fn create_tts_job_with_progress_stream<W>(
+        &self,
+        w: &mut W,
+        req: TTSJobReq,
+    ) -> Result<Option<String>>
+    where
+        W: tokio::io::AsyncWriteExt + Unpin,
+    {
+        let body = serde_json::to_string(&req)?;
+        let tts_job_url = format!("{}{}", self.url.as_str(), TTS_JOB_PATH);
+        let mut resp = self
+            .client
+            .post(tts_job_url)
+            .body(body)
+            .headers(self.headers.clone())
+            .header(CONTENT_TYPE, APPLICATION_JSON)
+            .header(ACCEPT, TEXT_EVENT_STREAM)
+            .send()
+            .await?;
+
+        let stream_url = resp
+            .headers()
+            .get(CONTENT_LOCATION)
+            .and_then(|hv| hv.to_str().ok().map(|s| s.to_string()));
+
+        while let Some(chunk) = resp.chunk().await? {
+            w.write_all(&chunk).await?;
+        }
+
+        Ok(stream_url)
+    }
+
     pub async fn get_tts_job(&self, id: String) -> Result<TTSJob> {
         let tts_job_url = format!("{}{}/{}", self.url.as_str(), TTS_JOB_PATH, id);
         let resp = self
@@ -232,6 +267,26 @@ impl Client {
             .get(tts_job_url)
             .headers(self.headers.clone())
             .header(ACCEPT, TEXT_EVENT_STREAM)
+            .send()
+            .await?;
+
+        while let Some(chunk) = resp.chunk().await? {
+            w.write_all(&chunk).await?;
+        }
+
+        Ok(())
+    }
+
+    pub async fn stream_tts_job_audio<W>(&self, w: &mut W, id: String) -> Result<()>
+    where
+        W: tokio::io::AsyncWriteExt + Unpin,
+    {
+        let tts_job_url = format!("{}{}/{}", self.url.as_str(), TTS_JOB_PATH, id);
+        let mut resp = self
+            .client
+            .get(tts_job_url)
+            .headers(self.headers.clone())
+            .header(ACCEPT, AUDIO_MPEG)
             .send()
             .await?;
 

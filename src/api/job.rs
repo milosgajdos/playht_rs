@@ -78,6 +78,7 @@ pub struct TTSJob {
     pub created: String,
     pub input: TTSJobReq,
     pub output: Option<Output>,
+    // TODO: make status an enum
     pub status: Option<String>,
     #[serde(rename = "_links")]
     pub links: Option<Vec<Link>>,
@@ -90,9 +91,45 @@ pub async fn create_tts_job(req: TTSJobReq) -> Result<TTSJob> {
     Ok(tts_job)
 }
 
-/// Get an existing TTS job.
+/// Create a new TTS job and immediately stream its progress.
+/// The job progress stream URL is returned if it gets created.
+pub async fn create_tts_job_with_progress_stream<W>(
+    w: &mut W,
+    req: TTSJobReq,
+) -> Result<Option<String>>
+where
+    W: tokio::io::AsyncWriteExt + Unpin,
+{
+    let stream_url = Client::new()
+        .create_tts_job_with_progress_stream(w, req)
+        .await?;
+
+    Ok(stream_url)
+}
+
+/// Get the TTS job with the given id.
 pub async fn get_tts_job(id: String) -> Result<TTSJob> {
     let tts_job = Client::new().get_tts_job(id).await?;
 
     Ok(tts_job)
+}
+
+/// Stream the progress of the TTS job with the given id.
+pub async fn stream_tts_job_progress<W>(w: &mut W, id: String) -> Result<()>
+where
+    W: tokio::io::AsyncWriteExt + Unpin,
+{
+    Client::new().stream_tts_job_progress(w, id).await?;
+
+    Ok(())
+}
+
+/// Stream TTS job audio.
+pub async fn stream_tts_job_audio<W>(w: &mut W, id: String) -> Result<()>
+where
+    W: tokio::io::AsyncWriteExt + Unpin,
+{
+    Client::new().stream_tts_job_audio(w, id).await?;
+
+    Ok(())
 }
