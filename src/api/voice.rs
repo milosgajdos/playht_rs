@@ -1,9 +1,9 @@
-use crate::{api::ClientBuilder, error::*, prelude::*};
-use bytes::Bytes;
-use reqwest::{header::CONTENT_TYPE, Method};
+use crate::{api::Client, prelude::*};
 use serde::{Deserialize, Serialize};
 
-pub const PATH: &str = "/voices";
+pub const VOICES_PATH: &str = "/voices";
+pub const CLONED_VOICES_PATH: &str = "/cloned-voices";
+pub const CLONE_VOICE_PATH: &str = "/cloned-voices/instant";
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Voice {
@@ -25,7 +25,7 @@ pub struct Voice {
 pub struct ClonedVoice {
     pub id: String,
     pub name: String,
-    pub r#type: String,
+    pub r#type: Option<String>,
 }
 
 #[derive(Debug, Serialize, Clone)]
@@ -53,20 +53,22 @@ pub struct DeleteClonedVoiceResp {
 }
 
 /// Get all available stock Voices.
-pub async fn get_voices() -> Result<Vec<Voice>> {
-    let cb = ClientBuilder::new()?;
-    let c = cb
-        .path(PATH)?
-        .header(CONTENT_TYPE.as_str(), APPLICATION_JSON_HEADER)?
-        .build()?;
-    let req = c.build_request(Method::GET, Bytes::new())?;
-    let resp = c.send_request(req).await?;
+pub async fn get_stock_voices() -> Result<Vec<Voice>> {
+    let voices = Client::new().get_stock_voices().await?;
 
-    if resp.status().is_success() {
-        let voices: Vec<Voice> = resp.json().await?;
-        Ok(voices)
-    } else {
-        let api_error: APIError = resp.json().await?;
-        Err(Box::new(Error::APIError(api_error)))
-    }
+    Ok(voices)
+}
+
+/// Get all cloned Voices.
+pub async fn get_cloned_voices() -> Result<Vec<ClonedVoice>> {
+    let voices = Client::new().get_cloned_voices().await?;
+
+    Ok(voices)
+}
+
+/// Clone voice from the file specified via req.
+pub async fn clone_voice_from_file(req: CloneVoiceFileRequest) -> Result<ClonedVoice> {
+    let voice = Client::new().clone_voice_from_file(req).await?;
+
+    Ok(voice)
 }

@@ -2,11 +2,13 @@ pub mod voice;
 
 use crate::{error::*, prelude::*};
 use reqwest::{
-    header::{HeaderMap, HeaderName, HeaderValue, AUTHORIZATION, CONTENT_TYPE, USER_AGENT},
-    Body, Method, Request, Response, Url,
+    header::{HeaderMap, HeaderName, HeaderValue, ACCEPT, AUTHORIZATION, CONTENT_TYPE, USER_AGENT},
+    multipart, Body, Method, Request, Response, Url,
 };
 use std::env;
-use voice::{Voice, PATH as VOICES_PATH};
+use voice::{
+    CloneVoiceFileRequest, ClonedVoice, Voice, CLONED_VOICES_PATH, CLONE_VOICE_PATH, VOICES_PATH,
+};
 
 const BASE_URL: &str = "https://api.play.ht/api";
 const V2_PATH: &str = "/v2";
@@ -58,23 +60,75 @@ impl Client {
         Ok(resp)
     }
 
-    pub async fn get_voices(&self) -> Result<Vec<Voice>> {
+    pub async fn get_stock_voices(&self) -> Result<Vec<Voice>> {
         let voices_url = format!("{}{}", self.url.as_str(), VOICES_PATH);
         let resp = self
             .client
             .get(voices_url)
             .headers(self.headers.clone())
-            .header(CONTENT_TYPE, APPLICATION_JSON_HEADER)
+            .header(CONTENT_TYPE, APPLICATION_JSON)
             .send()
             .await?;
 
         if resp.status().is_success() {
             let voices: Vec<Voice> = resp.json().await?;
-            Ok(voices)
-        } else {
-            let api_error: APIError = resp.json().await?;
-            Err(Box::new(Error::APIError(api_error)))
+            return Ok(voices);
         }
+
+        let api_error: APIError = resp.json().await?;
+        Err(Box::new(Error::APIError(api_error)))
+    }
+
+    pub async fn get_cloned_voices(&self) -> Result<Vec<ClonedVoice>> {
+        let voices_url = format!("{}{}", self.url.as_str(), CLONED_VOICES_PATH);
+        let resp = self
+            .client
+            .get(voices_url)
+            .headers(self.headers.clone())
+            .header(CONTENT_TYPE, APPLICATION_JSON)
+            .send()
+            .await?;
+
+        if resp.status().is_success() {
+            let voices: Vec<ClonedVoice> = resp.json().await?;
+            return Ok(voices);
+        }
+
+        let api_error: APIError = resp.json().await?;
+        Err(Box::new(Error::APIError(api_error)))
+    }
+
+    pub async fn clone_voice_from_file(&self, req: CloneVoiceFileRequest) -> Result<ClonedVoice> {
+        let voice_name_part = multipart::Part::text(req.voice_name).mime_str(TEXT_PLAIN)?;
+        let sample_file_part = multipart::Part::bytes(std::fs::read(&req.sample_file)?)
+            .file_name(req.sample_file)
+            .mime_str(&req.mime_type)?;
+
+        let form = multipart::Form::new()
+            .part("voice_name", voice_name_part)
+            .part("sample_file", sample_file_part);
+
+        let clone_voice_url = format!("{}{}", self.url.as_str(), CLONE_VOICE_PATH);
+        let resp = self
+            .client
+            .post(clone_voice_url)
+            .headers(self.headers.clone())
+            .header(ACCEPT, APPLICATION_JSON)
+            .header(
+                CONTENT_TYPE,
+                format!("{}; boundary={}", MULTIPART_FORM, form.boundary()),
+            )
+            .multipart(form)
+            .send()
+            .await?;
+
+        if resp.status().is_success() {
+            let voice: ClonedVoice = resp.json().await?;
+            return Ok(voice);
+        }
+
+        let api_error: APIError = resp.json().await?;
+        Err(Box::new(Error::APIError(api_error)))
     }
 }
 

@@ -7,7 +7,7 @@
 //! Play.ht API docs: https://docs.play.ht/reference/api-getting-started
 //!
 
-pub use crate::api::voice::get_voices;
+pub use crate::api::voice::{get_cloned_voices, get_stock_voices};
 
 pub mod api;
 pub mod error;
