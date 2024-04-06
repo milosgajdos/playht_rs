@@ -7,8 +7,11 @@ use reqwest::{
 };
 use std::env;
 use voice::{
-    CloneVoiceFileRequest, ClonedVoice, Voice, CLONED_VOICES_PATH, CLONE_VOICE_PATH, VOICES_PATH,
+    CloneVoiceFileRequest, CloneVoiceURLRequest, ClonedVoice, Voice, CLONED_VOICES_INSTANT_PATH,
+    CLONED_VOICES_PATH, VOICES_PATH,
 };
+
+use self::voice::{DeleteClonedVoiceRequest, DeleteClonedVoiceResp};
 
 const BASE_URL: &str = "https://api.play.ht/api";
 const V2_PATH: &str = "/v2";
@@ -108,7 +111,7 @@ impl Client {
             .part("voice_name", voice_name_part)
             .part("sample_file", sample_file_part);
 
-        let clone_voice_url = format!("{}{}", self.url.as_str(), CLONE_VOICE_PATH);
+        let clone_voice_url = format!("{}{}", self.url.as_str(), CLONED_VOICES_INSTANT_PATH);
         let resp = self
             .client
             .post(clone_voice_url)
@@ -125,6 +128,52 @@ impl Client {
         if resp.status().is_success() {
             let voice: ClonedVoice = resp.json().await?;
             return Ok(voice);
+        }
+
+        let api_error: APIError = resp.json().await?;
+        Err(Box::new(Error::APIError(api_error)))
+    }
+
+    pub async fn clone_voice_from_url(&self, req: CloneVoiceURLRequest) -> Result<ClonedVoice> {
+        let body = serde_json::to_string(&req)?;
+        let clone_voice_url = format!("{}{}", self.url.as_str(), CLONED_VOICES_PATH);
+        let resp = self
+            .client
+            .post(clone_voice_url)
+            .headers(self.headers.clone())
+            .header(ACCEPT, APPLICATION_JSON)
+            .body(body)
+            .send()
+            .await?;
+
+        if resp.status().is_success() {
+            let voice: ClonedVoice = resp.json().await?;
+            return Ok(voice);
+        }
+
+        let api_error: APIError = resp.json().await?;
+        Err(Box::new(Error::APIError(api_error)))
+    }
+
+    pub async fn delete_cloned_voice(
+        &self,
+        req: DeleteClonedVoiceRequest,
+    ) -> Result<DeleteClonedVoiceResp> {
+        let body = serde_json::to_string(&req)?;
+        let clone_voice_url = format!("{}{}", self.url.as_str(), CLONED_VOICES_PATH);
+        let resp = self
+            .client
+            .delete(clone_voice_url)
+            .body(body)
+            .headers(self.headers.clone())
+            .header(CONTENT_TYPE, APPLICATION_JSON)
+            .header(ACCEPT, APPLICATION_JSON)
+            .send()
+            .await?;
+
+        if resp.status().is_success() {
+            let del_resp: DeleteClonedVoiceResp = resp.json().await?;
+            return Ok(del_resp);
         }
 
         let api_error: APIError = resp.json().await?;

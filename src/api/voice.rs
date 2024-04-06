@@ -2,8 +2,8 @@ use crate::{api::Client, prelude::*};
 use serde::{Deserialize, Serialize};
 
 pub const VOICES_PATH: &str = "/voices";
-pub const CLONED_VOICES_PATH: &str = "/cloned-voices";
-pub const CLONE_VOICE_PATH: &str = "/cloned-voices/instant";
+pub const CLONED_VOICES_PATH: &str = "/cloned-voices/";
+pub const CLONED_VOICES_INSTANT_PATH: &str = "/cloned-voices/instant";
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Voice {
@@ -28,7 +28,7 @@ pub struct ClonedVoice {
     pub r#type: Option<String>,
 }
 
-#[derive(Debug, Serialize, Clone)]
+#[derive(Debug, Clone)]
 pub struct CloneVoiceFileRequest {
     pub sample_file: String,
     pub voice_name: String,
@@ -71,4 +71,18 @@ pub async fn clone_voice_from_file(req: CloneVoiceFileRequest) -> Result<ClonedV
     let voice = Client::new().clone_voice_from_file(req).await?;
 
     Ok(voice)
+}
+
+/// Clone voice from the URL specified via req.
+pub async fn clone_voice_from_url(req: CloneVoiceURLRequest) -> Result<ClonedVoice> {
+    let voice = Client::new().clone_voice_from_url(req).await?;
+
+    Ok(voice)
+}
+
+/// Delete cloned voice.
+pub async fn delete_cloned_voice(req: DeleteClonedVoiceRequest) -> Result<DeleteClonedVoiceResp> {
+    let delete_resp = Client::new().delete_cloned_voice(req).await?;
+
+    Ok(delete_resp)
 }
