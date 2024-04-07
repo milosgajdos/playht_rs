@@ -6,7 +6,7 @@ keywords = ["playht", "play.ht", "tts", "text-to-speech", "voice-clone", "ai"]
 categories = ["web-programming::http-client"]
 repository = "https://github.com/milosgajdos/playht_rs"
 authors = ["milosgajdos <milosthegajdos@gmail.com>"]
-license = "Apache 2.0"
+license = "Apache-2.0"
 edition = "2021"
 readme = "README.md"
 
