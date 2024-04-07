@@ -1,4 +1,5 @@
 pub mod job;
+pub mod stream;
 pub mod tts;
 pub mod voice;
 
@@ -12,6 +13,7 @@ use reqwest::{
     multipart, Body, Method, Request, Response, Url,
 };
 use std::env;
+use stream::{TTSStreamReq, TTSStreamURL, TTS_STREAM_PATH};
 use voice::{
     CloneVoiceFileRequest, CloneVoiceURLRequest, ClonedVoice, DeleteClonedVoiceRequest,
     DeleteClonedVoiceResp, Voice, CLONED_VOICES_INSTANT_PATH, CLONED_VOICES_PATH, VOICES_PATH,
@@ -295,6 +297,53 @@ impl Client {
         }
 
         Ok(())
+    }
+
+    pub async fn stream_audio<W>(&self, w: &mut W, req: TTSStreamReq) -> Result<()>
+    where
+        W: tokio::io::AsyncWriteExt + Unpin,
+    {
+        let body = serde_json::to_string(&req)?;
+        let tts_stream_url = format!("{}{}", self.url.as_str(), TTS_STREAM_PATH);
+
+        let mut resp = self
+            .client
+            .post(tts_stream_url)
+            .body(body)
+            .headers(self.headers.clone())
+            .header(CONTENT_TYPE, APPLICATION_JSON)
+            .header(ACCEPT, AUDIO_MPEG)
+            .send()
+            .await?;
+
+        while let Some(chunk) = resp.chunk().await? {
+            w.write_all(&chunk).await?;
+        }
+
+        Ok(())
+    }
+
+    pub async fn get_audio_stream_url(&self, req: TTSStreamReq) -> Result<TTSStreamURL> {
+        let body = serde_json::to_string(&req)?;
+        let tts_stream_url = format!("{}{}", self.url.as_str(), TTS_STREAM_PATH);
+
+        let resp = self
+            .client
+            .post(tts_stream_url)
+            .body(body)
+            .headers(self.headers.clone())
+            .header(CONTENT_TYPE, APPLICATION_JSON)
+            .header(ACCEPT, APPLICATION_JSON)
+            .send()
+            .await?;
+
+        if resp.status().is_success() {
+            let audio_stream_url: TTSStreamURL = resp.json().await?;
+            return Ok(audio_stream_url);
+        }
+
+        let api_error: APIError = resp.json().await?;
+        Err(Box::new(Error::APIError(api_error)))
     }
 }
 
