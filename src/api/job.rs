@@ -91,7 +91,7 @@ pub async fn create_tts_job(req: TTSJobReq) -> Result<TTSJob> {
     Ok(tts_job)
 }
 
-/// Create a new TTS job and immediately stream its progress.
+/// Create a new TTS job and immediately stream its progress into w.
 /// The job progress stream URL is returned if it gets created.
 pub async fn create_tts_job_with_progress_stream<W>(
     w: &mut W,
@@ -114,7 +114,7 @@ pub async fn get_tts_job(id: String) -> Result<TTSJob> {
     Ok(tts_job)
 }
 
-/// Stream the progress of the TTS job with the given id.
+/// Stream the progress of the TTS job with the given id into w.
 pub async fn stream_tts_job_progress<W>(w: &mut W, id: String) -> Result<()>
 where
     W: tokio::io::AsyncWriteExt + Unpin,
@@ -124,7 +124,7 @@ where
     Ok(())
 }
 
-/// Stream TTS job audio.
+/// Stream audio for the TTS job with the given id into w.
 pub async fn stream_tts_job_audio<W>(w: &mut W, id: String) -> Result<()>
 where
     W: tokio::io::AsyncWriteExt + Unpin,
