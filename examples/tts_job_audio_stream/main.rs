@@ -9,7 +9,6 @@ async fn main() -> Result<()> {
     let file_path = args.next().unwrap();
 
     let tts_job = job::get_tts_job(job_id.clone()).await?;
-
     println!("Got TTS job: {}", tts_job.id);
 
     // TODO: we should make status an enum
@@ -22,7 +21,6 @@ async fn main() -> Result<()> {
 
     let file = File::create(file_path.clone()).await?;
     let mut w = BufWriter::new(file);
-
     api::Client::new()
         .stream_tts_job_audio(&mut w, job_id)
         .await?;

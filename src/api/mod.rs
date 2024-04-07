@@ -1,8 +1,15 @@
-//! Provides an implementation of play.ht API client.
+//! This module provides an implementation of play.ht API client.
 //!
-//! Use the [`Client`] for interacing with playht API.
-//! You can configure various aspects of the [`Client`] with [`ClientBuilder`].
-//! Note that the client is async. It leverages [`tokio`] runtime.
+//! Use the [`Client`] for interacing with the playht API.
+//! You can configure and build the [`Client`] with [`ClientBuilder`].
+//! Note that the [`Client`] implementation is async -- it leverages [`tokio`] runtime,
+//! so in order to use it you must do the same.
+//!
+//! There are a few submodules, each of which defines various data structures
+//! leveraged by the [`Client`]. Each module also provides a simple oone-off
+//! functions that create the one-off instance(s) of the [`Client`] underneath.
+//! If you need just a specific functionality, such as cloning a voice,
+//!  you might want to use those modules instead of creating the client, etc.
 //!
 
 pub mod job;

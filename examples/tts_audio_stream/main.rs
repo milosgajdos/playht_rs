@@ -12,7 +12,6 @@ async fn main() -> Result<()> {
 
     let client = api::Client::new();
     let voices = client.get_stock_voices().await?;
-
     if voices.is_empty() {
         return Err("No voices available".into());
     }
@@ -25,12 +24,9 @@ async fn main() -> Result<()> {
         sample_rate: Some(24000),
         ..Default::default()
     };
-
     let file = File::create(file_path.clone()).await?;
     let mut w = BufWriter::new(file);
-
-    api::Client::new().stream_audio(&mut w, req).await?;
-
+    client.stream_audio(&mut w, req).await?;
     println!("Done streaming into {}", file_path);
 
     Ok(())
