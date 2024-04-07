@@ -1,3 +1,4 @@
+//! `cargo run --example tts_job_audio_stream -- "job-id" "/path/to/output.mp3"`
 use playht_rs::{api, api::job, prelude::*};
 use tokio::{fs::File, io::BufWriter};
 

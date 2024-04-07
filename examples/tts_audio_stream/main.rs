@@ -1,3 +1,4 @@
+//! `cargo run --example tts_audio_stream -- "foobar.mp3"`
 use playht_rs::{
     api::{self, stream::TTSStreamReq, tts::Quality},
     prelude::*,

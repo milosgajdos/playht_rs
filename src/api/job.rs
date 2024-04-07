@@ -1,3 +1,8 @@
+//! module for managing and monitoring async TTS jobs.
+//!
+//! You can create, fetch, delete and monitor the progress
+//! of the async TTS jobs.
+
 use crate::{
     api::tts::{Emotion, OutputFormat, Quality, VoiceEngine},
     api::Client,
@@ -5,8 +10,10 @@ use crate::{
 };
 use serde::{Deserialize, Serialize};
 
+/// URL path for creating and fetching async TTS jobs.
 pub const TTS_JOB_PATH: &str = "/tts";
 
+/// TTS jobs creation request.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct TTSJobReq {
@@ -55,6 +62,7 @@ impl Default for TTSJobReq {
     }
 }
 
+/// TTS job output metadata.
 #[derive(Debug, Clone, Deserialize)]
 pub struct Output {
     pub duration: f64,
@@ -62,6 +70,7 @@ pub struct Output {
     pub url: String,
 }
 
+/// TTS job progress metadata.
 #[derive(Debug, Clone, Deserialize)]
 pub struct Link {
     #[serde(rename = "contentType")]
@@ -72,6 +81,7 @@ pub struct Link {
     pub rel: Option<String>,
 }
 
+/// TTS job metadata.
 #[derive(Debug, Clone, Deserialize)]
 pub struct TTSJob {
     pub id: String,
@@ -84,15 +94,17 @@ pub struct TTSJob {
     pub links: Option<Vec<Link>>,
 }
 
-/// Create a new TTS job.
+/// Creates a new TTS job.
+/// Convenience method which does the same thing as [`crate::api::Client::create_tts_job`].
 pub async fn create_tts_job(req: TTSJobReq) -> Result<TTSJob> {
     let tts_job = Client::new().create_tts_job(req).await?;
 
     Ok(tts_job)
 }
 
-/// Create a new TTS job and immediately stream its progress into w.
-/// The job progress stream URL is returned if it gets created.
+/// Creates a new TTS job and immediately streams its progress.
+/// The job progress stream URL is returned if the job gets successfully created.
+/// Convenience method which does the same thing as [`crate::api::Client::create_tts_job_with_progress_stream`].
 pub async fn create_tts_job_with_progress_stream<W>(
     w: &mut W,
     req: TTSJobReq,
@@ -107,14 +119,16 @@ where
     Ok(stream_url)
 }
 
-/// Get the TTS job with the given id.
+/// Fetches a TTS job with the given id.
+/// Convenience method which does the same thing as [`crate::api::Client::get_tts_job`].
 pub async fn get_tts_job(id: String) -> Result<TTSJob> {
     let tts_job = Client::new().get_tts_job(id).await?;
 
     Ok(tts_job)
 }
 
-/// Stream the progress of the TTS job with the given id into w.
+/// Streams the progress of a TTS job with the given id.
+/// Convenience method which does the same thing as [`crate::api::Client::stream_tts_job_progress`].
 pub async fn stream_tts_job_progress<W>(w: &mut W, id: String) -> Result<()>
 where
     W: tokio::io::AsyncWriteExt + Unpin,
@@ -124,7 +138,8 @@ where
     Ok(())
 }
 
-/// Stream audio for the TTS job with the given id into w.
+/// Streams audio data for the TTS job with the given id.
+/// Convenience method which does the same thing as [`crate::api::Client::stream_tts_job_audio`].
 pub async fn stream_tts_job_audio<W>(w: &mut W, id: String) -> Result<()>
 where
     W: tokio::io::AsyncWriteExt + Unpin,

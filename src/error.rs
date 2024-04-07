@@ -1,6 +1,11 @@
+//! Defines errors used in the crate.
+//!
+
 use serde::{self, Deserialize, Deserializer};
 use thiserror;
 
+/// Error defines the types of error that can be
+/// returned from any of the crate module functions.
 #[derive(Debug, thiserror::Error, Deserialize)]
 pub enum Error {
     #[error("Client build error: {0}")]
@@ -9,6 +14,16 @@ pub enum Error {
     APIError(APIError),
 }
 
+/// Deserialized API Errors as returned by play.ht API.
+///
+/// play.ht returns 3 different types of errors
+/// * [`Gen`][g] - a generic JSON serialized error with strict schema.
+/// * [`Internal`][i] - a JSON serialized error returned when 50x status codes.
+/// * [`RateLimit`][r] - a simple string informing you you've hit rate limit quota.
+///
+/// [g]: APIError::Gen
+/// [i]: APIError::Internal
+/// [r]: APIError::RateLimit
 #[derive(Debug, thiserror::Error)]
 pub enum APIError {
     #[error("Generic API error: {error_message} ({error_id})")]
