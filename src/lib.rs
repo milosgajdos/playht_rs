@@ -2,9 +2,9 @@
 //!
 //! An unofficial play.ht API client library.
 //!
-//! play.ht homesite: https://play.ht/
+//! play.ht homesite: <https://play.ht/>
 //!
-//! play.ht API docs: https://docs.play.ht/reference/api-getting-started
+//! play.ht API docs: <https://docs.play.ht/reference/api-getting-started>
 //!
 
 pub use crate::api::{

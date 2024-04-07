@@ -1,3 +1,4 @@
+//! `cargo run --example clone_voices -- "/path/to/voice.m4a" "audio/x-m4a"`
 use playht_rs::{
     api::{self, voice::CloneVoiceFileRequest, voice::DeleteClonedVoiceRequest},
     prelude::*,

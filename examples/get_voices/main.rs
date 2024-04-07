@@ -1,3 +1,4 @@
+//! `cargo run --example get_voices`
 use playht_rs::{
     api::{self, voice::get_stock_voices},
     prelude::*,

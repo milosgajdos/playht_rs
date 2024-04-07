@@ -1,3 +1,7 @@
+//! module for streaming TTS audio in real-time.
+//!
+//! It lets you create and stream the audio in real-time.
+
 use crate::{
     api::tts::{Emotion, OutputFormat, Quality, VoiceEngine},
     api::Client,
@@ -5,8 +9,10 @@ use crate::{
 };
 use serde::{Deserialize, Serialize};
 
+/// URL path for fetching the audio streams.
 pub const TTS_STREAM_PATH: &str = "/tts/stream";
 
+/// Audio stream request options.
 #[derive(Debug, Clone, Serialize)]
 #[serde(default)]
 pub struct TTSStreamReq {
@@ -45,6 +51,7 @@ impl Default for TTSStreamReq {
     }
 }
 
+/// Audio stream URL metadata.
 #[derive(Debug, Clone, Deserialize)]
 pub struct TTSStreamURL {
     pub href: String,
@@ -55,7 +62,8 @@ pub struct TTSStreamURL {
     pub description: String,
 }
 
-/// Stream audio for the given input request into w.
+/// Stream raw audio data.
+/// This is a convenience function that does the same thing as [`crate::api::Client::stream_audio`].
 pub async fn stream_audio<W>(w: &mut W, req: TTSStreamReq) -> Result<()>
 where
     W: tokio::io::AsyncWriteExt + Unpin,
@@ -65,7 +73,8 @@ where
     Ok(())
 }
 
-/// Get audio stream URL for the given input request.
+/// Fetch the URL for audio stream.
+/// This is a convenience function that does the same thing as [`crate::api::Client::get_audio_stream_url`].
 pub async fn get_audio_stream_url(req: TTSStreamReq) -> Result<TTSStreamURL> {
     let audio_stream_url = Client::new().get_audio_stream_url(req).await?;
 

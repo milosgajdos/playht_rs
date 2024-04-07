@@ -1,3 +1,4 @@
+//! `cargo run --example tts_jobs`
 use playht_rs::{
     api::{self, job::TTSJobReq, tts::Quality},
     prelude::*,

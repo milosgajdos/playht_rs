@@ -18,3 +18,27 @@ tokio = { version = "1", features = ["full"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "=1.0"
 thiserror = "1.0.58"
+
+[[example]]
+name = "get_voices"
+path = "examples/get_voices/main.rs"
+
+[[example]]
+name = "clone_voices"
+path = "examples/clone_voices/main.rs"
+
+[[example]]
+name = "tts_jobs"
+path = "examples/tts_jobs/main.rs"
+
+[[example]]
+name = "tts_job_progress"
+path = "examples/tts_job_progress/main.rs"
+
+[[example]]
+name = "tts_job_audio_stream"
+path = "examples/tts_job_audio_stream/main.rs"
+
+[[example]]
+name = "tts_audio_stream"
+path = "examples/tts_audio_stream/main.rs"
