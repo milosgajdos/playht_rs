@@ -2,9 +2,11 @@ name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
+    tags:
+      - "*"
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 env:
   CARGO_TERM_COLOR: always
@@ -15,23 +17,53 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: check out code
+        uses: actions/checkout@v4
 
-    - name: check out code
-      uses: actions/checkout@v4
+      - name: cargo version and environment
+        id: vars
+        run: |
+          printf "Using cargo at: $(which cargo)\n"
+          printf "cargo version: $(cargo version)\n"
 
-    - name: cargo version and environment
-      id: vars
-      run: |
-        printf "Using cargo at: $(which cargo)\n"
-        printf "cargo version: $(cargo version)\n"
+      - name: setup rust toolchain
+        uses: dtolnay/rust-toolchain@stable
 
-    - name: setup rust toolchain
-      uses: dtolnay/rust-toolchain@stable
+      - name: run build
+        run: |
+          cargo check --verbose
+          cargo build --release --verbose
 
-    - name: run build
-      run: |
-        cargo check --verbose
-        cargo build --release --verbose
+      - name: run tests
+        run: cargo test --verbose
 
-    - name: run tests
-      run: cargo test --verbose
+  cargo-publish:
+    name: Publish Crate
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    env:
+      CRATES_TOKEN: ${{ secrets.CRATES_TOKEN }}
+    steps:
+      - name: check out code
+        uses: actions/checkout@v4
+
+      - name: cargo version and environment
+        id: vars
+        run: |
+          printf "Using cargo at: $(which cargo)\n"
+          printf "cargo version: $(cargo version)\n"
+
+      - name: setup rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: run build
+        run: |
+          cargo check --verbose
+          cargo build --release --verbose
+
+      - name: publish crate
+        run: |
+          PLAYHTRS_TMP=$(mktemp /tmp/playhtrsXXX.txt) || echo "::error::mktemp error"
+          echo "PLAYHTRS_TMP=$PLAYHTRS_TMP" >> $GITHUB_ENV
+          cargo publish --token $CRATES_TOKEN 2> $PLAYHTRS_TMP
+          cat $PLAYHTRS_TMP
