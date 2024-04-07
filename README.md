@@ -1,9 +1,9 @@
 # playht_rs
 
-An unofficial Play.ht Rust API client crate. Similar to the [Go module](https://github.com/milosgajdos/go-playht) implementation.
-
 [![Build Status](https://github.com/milosgajdos/playht_rs/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/milosgajdos/playht_rs/actions?query=workflow%3ACI)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
+An unofficial [play.ht](https://play.ht) Rust API client crate. Similar to the [Go module](https://github.com/milosgajdos/go-playht) implementation.
 
 In order to use this create you must create an account on [play.ht](https://play.ht), generate an API secret and retrieve your User ID.
 See the official docs [here](https://docs.play.ht/reference/api-authentication).
