@@ -2,7 +2,7 @@
 name = "playht_rs"
 version = "0.0.1"
 description = "A library for interacting with play.ht API"
-keywords = ["playht", "play.ht", "tts", "text-to-speech", "ai"]
+keywords = ["playht", "tts", "text-to-speech", "ai"]
 categories = ["web-programming::http-client"]
 repository = "https://github.com/milosgajdos/playht_rs"
 authors = ["milosgajdos <milosthegajdos@gmail.com>"]
