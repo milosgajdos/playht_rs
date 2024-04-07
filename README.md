@@ -1,5 +1,6 @@
 # playht_rs
 
+[![Crates.io Version](https://img.shields.io/crates/v/playht_rs.svg)](https://crates.io/crates/playht_rs)
 [![Build Status](https://github.com/milosgajdos/playht_rs/actions/workflows/ci.yaml/badge.svg?branch=main)](https://github.com/milosgajdos/playht_rs/actions?query=workflow%3ACI)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
