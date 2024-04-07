@@ -1,4 +1,4 @@
-//! module for cloning voices from files or URLs.
+//! module for cloning and fetching voices from files or URLs.
 //!
 //! It lets you create, fetch delete cloned voices.
 

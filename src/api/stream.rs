@@ -1,6 +1,6 @@
 //! module for streaming TTS audio in real-time.
 //!
-//! It lets you create and stream the audio in real-time.
+//! You can create new audio streams and stream them in real-time.
 
 use crate::{
     api::tts::{Emotion, OutputFormat, Quality, VoiceEngine},

@@ -1,6 +1,6 @@
-//! module for managing and monitoring the play.ht async TTS jobs.
+//! module for managing and monitoring async TTS jobs.
 //!
-//! It lets you create, fetch, delete and monitor the progress
+//! You can create, fetch, delete and monitor the progress
 //! of the async TTS jobs.
 
 use crate::{
@@ -13,7 +13,7 @@ use serde::{Deserialize, Serialize};
 /// URL path for creating and fetching async TTS jobs.
 pub const TTS_JOB_PATH: &str = "/tts";
 
-/// Used to request creating of async TTS jobs.
+/// TTS jobs creation request.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(default)]
 pub struct TTSJobReq {
@@ -70,7 +70,7 @@ pub struct Output {
     pub url: String,
 }
 
-/// A TTS job progress metadata.
+/// TTS job progress metadata.
 #[derive(Debug, Clone, Deserialize)]
 pub struct Link {
     #[serde(rename = "contentType")]

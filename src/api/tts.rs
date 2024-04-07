@@ -1,4 +1,7 @@
-//! module that defines various TTS data structures throughout API.
+//! module that defines various TTS data structures.
+//!
+//! These data structures are used for configuring
+//! various properties of TTS streams and jobs.
 
 use serde::{Deserialize, Serialize};
 

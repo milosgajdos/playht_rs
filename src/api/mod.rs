@@ -1,3 +1,10 @@
+//! Provides an implementation of play.ht API client.
+//!
+//! Use the [`Client`] for interacing with playht API.
+//! You can configure various aspects of the [`Client`] with [`ClientBuilder`].
+//! Note that the client is async. It leverages [`tokio`] runtime.
+//!
+
 pub mod job;
 pub mod stream;
 pub mod tts;
@@ -19,21 +26,22 @@ use voice::{
     DeleteClonedVoiceResp, Voice, CLONED_VOICES_INSTANT_PATH, CLONED_VOICES_PATH, VOICES_PATH,
 };
 
-/// Base URL path.
+/// API Base URL.
 pub const BASE_URL: &str = "https://api.play.ht/api";
-/// V2 URL path.
+/// V2 API URL path.
 const V2_PATH: &str = "/v2";
 // TODO: this is used for gRPC streaming
 // Remove this attribute once implemented.
 #[allow(unused)]
+/// V1 API URL path.
 const V1_PATH: &str = "/v1";
 
 /// HTTP header used for API authentication.
 pub const USER_ID_HEADER: &str = "X-USER-ID";
-/// API client `User-Agent` used in the HTTP requests.
+/// API client `User-Agent`.
 pub const CLIENT_USER_AGENT: &str = "milosgajdos/playht_rs";
 
-/// Provides <https://play.ht> API client implementation.
+/// <https://play.ht> API client.
 #[derive(Debug)]
 pub struct Client {
     client: reqwest::Client,
@@ -401,7 +409,7 @@ impl Client {
     }
 }
 
-/// Used to configure the API [`Client`].
+/// Configures and builds the [`Client`].
 #[derive(Debug)]
 pub struct ClientBuilder {
     client: Option<reqwest::Client>,
