@@ -9,7 +9,6 @@ use tokio;
 async fn main() -> Result<()> {
     let client = api::Client::new();
     let voices = client.get_stock_voices().await?;
-
     if voices.is_empty() {
         return Err("No voices available".into());
     }
@@ -24,7 +23,6 @@ async fn main() -> Result<()> {
     };
 
     let tts_job = client.create_tts_job(req).await?;
-
     println!("TTS job created: {:?}", tts_job);
 
     let mut stdout = tokio::io::stdout();
