@@ -22,6 +22,11 @@ jobs:
       - name: check out code
         uses: actions/checkout@v4
 
+      - name: Update apt
+        run: sudo apt update
+      - name: Install alsa
+        run: sudo apt install -y --no-install-recommends libasound2-dev pkg-config
+
       - name: cargo version and environment
         id: vars
         run: |
