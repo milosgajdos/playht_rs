@@ -42,7 +42,4 @@ jobs:
       - name: publish crate
         if: startsWith(github.ref, 'refs/tags/')
         run: |
-          PLAYHTRS_TMP=$(mktemp /tmp/playhtrsXXX.txt) || echo "::error::mktemp error"
-          echo "PLAYHTRS_TMP=$PLAYHTRS_TMP" >> $GITHUB_ENV
-          cargo publish --token $CRATES_TOKEN 2> $PLAYHTRS_TMP
-          cat $PLAYHTRS_TMP
+          cargo publish --token $CRATES_TOKEN
