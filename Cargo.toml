@@ -13,8 +13,10 @@ readme = "README.md"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-reqwest = { version = "0.12", features = ["json", "multipart"] }
+reqwest = { version = "0.12", features = ["json", "multipart", "stream"] }
 tokio = { version = "1", features = ["full"] }
+tokio-stream = { version = "0.1" }
+bytes = { version = "1", features = ["serde"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "=1.0"
 thiserror = "1.0.58"
@@ -31,6 +33,10 @@ name = "clone_voices"
 path = "examples/clone_voices/main.rs"
 
 [[example]]
+name = "play_audio"
+path = "examples/play_audio/main.rs"
+
+[[example]]
 name = "tts_jobs"
 path = "examples/tts_jobs/main.rs"
 
@@ -43,5 +49,13 @@ name = "tts_job_audio_stream"
 path = "examples/tts_job_audio_stream/main.rs"
 
 [[example]]
-name = "tts_audio_stream"
-path = "examples/tts_audio_stream/main.rs"
+name = "tts_play_audio_stream"
+path = "examples/tts_play_audio_stream/main.rs"
+
+[[example]]
+name = "tts_write_audio_stream"
+path = "examples/tts_write_audio_stream/main.rs"
+
+[[example]]
+name = "tts_stream_audio"
+path = "examples/tts_stream_audio/main.rs"

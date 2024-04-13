@@ -1,7 +1,11 @@
 //! Prelude defines various constants and type aliases.
 
+use reqwest;
+
 /// Result type alias used in this crate.
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
+
+pub type StreamResult<T> = std::result::Result<T, reqwest::Error>;
 
 /// `application/json` HTTP header
 pub const APPLICATION_JSON: &str = "application/json";

@@ -18,6 +18,7 @@ pub mod tts;
 pub mod voice;
 
 use crate::{error::*, prelude::*};
+use bytes::Bytes;
 use job::{TTSJob, TTSJobReq, TTS_JOB_PATH};
 use reqwest::{
     header::{
@@ -28,6 +29,7 @@ use reqwest::{
 };
 use std::env;
 use stream::{TTSStreamReq, TTSStreamURL, TTS_STREAM_PATH};
+use tokio_stream::Stream;
 use voice::{
     CloneVoiceFileRequest, CloneVoiceURLRequest, ClonedVoice, DeleteClonedVoiceRequest,
     DeleteClonedVoiceResp, Voice, CLONED_VOICES_INSTANT_PATH, CLONED_VOICES_PATH, VOICES_PATH,
@@ -361,11 +363,11 @@ impl Client {
         Ok(())
     }
 
-    /// Stream TTS audio in real-time to the given writer.
+    /// Write TTS audio in real-time to the given writer.
     /// Unlike [`Client::stream_tts_job_audio`] this does not create an async job.
-    /// Instead it immediately starts streaming the audio data into the given writer.
+    /// Instead it immediately starts writing raw audio data into the given writer.
     /// See the [official docs](https://docs.play.ht/reference/api-generate-tts-audio-stream).
-    pub async fn stream_audio<W>(&self, w: &mut W, req: TTSStreamReq) -> Result<()>
+    pub async fn write_audio_stream<W>(&self, w: &mut W, req: TTSStreamReq) -> Result<()>
     where
         W: tokio::io::AsyncWriteExt + Unpin,
     {
@@ -389,8 +391,8 @@ impl Client {
         Ok(())
     }
 
-    /// Get the audio stream URL instead of streaming the raw audio like [`Client::stream_audio`].
-    /// You can then use the returned URL for fetching the stream.
+    /// Get audio stream URL instead of streaming the raw audio like [`Client::stream_audio`].
+    /// You can then use the returned URL for streaming the audio.
     /// See the [official docs](https://docs.play.ht/reference/api-generate-tts-audio-stream).
     pub async fn get_audio_stream_url(&self, req: TTSStreamReq) -> Result<TTSStreamURL> {
         let body = serde_json::to_string(&req)?;
@@ -413,6 +415,30 @@ impl Client {
 
         let api_error: APIError = resp.json().await?;
         Err(Box::new(Error::APIError(api_error)))
+    }
+
+    /// Stream raw TTS audio.
+    /// Unlike [`write_audio_stream`] this method returns an async stream object
+    /// that streams raw audio. This way the consumer is in control of streaming.
+    /// See the [official docs](https://docs.play.ht/reference/api-generate-tts-audio-stream).
+    pub async fn stream_audio(
+        &self,
+        req: TTSStreamReq,
+    ) -> Result<impl Stream<Item = StreamResult<Bytes>>> {
+        let body = serde_json::to_string(&req)?;
+        let tts_stream_url = format!("{}{}", self.url.as_str(), TTS_STREAM_PATH);
+
+        let resp = self
+            .client
+            .post(tts_stream_url)
+            .body(body)
+            .headers(self.headers.clone())
+            .header(CONTENT_TYPE, APPLICATION_JSON)
+            .header(ACCEPT, AUDIO_MPEG)
+            .send()
+            .await?;
+
+        Ok(resp.bytes_stream())
     }
 }
 
