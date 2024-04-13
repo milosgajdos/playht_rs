@@ -1,4 +1,4 @@
-//! `cargo run --example tts_job_progress`
+//! `cargo run --example tts_write_job_progress_stream`
 use playht_rs::{
     api::{self, job::TTSJobReq, tts::Quality},
     prelude::*,
@@ -27,7 +27,7 @@ async fn main() -> Result<()> {
 
     let mut stdout = tokio::io::stdout();
     let _ = client
-        .stream_tts_job_progress(&mut stdout, tts_job.id)
+        .write_tts_job_progress_stream(&mut stdout, tts_job.id)
         .await?;
 
     Ok(())

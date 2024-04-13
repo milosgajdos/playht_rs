@@ -9,8 +9,8 @@
 
 pub use crate::api::{
     job::{
-        create_tts_job, create_tts_job_with_progress_stream, get_tts_job, stream_tts_job_audio,
-        stream_tts_job_progress,
+        create_tts_job, create_tts_job_write_progress_stream, get_tts_job, stream_tts_job_audio,
+        stream_tts_job_progress, write_tts_job_progress_stream,
     },
     stream::{get_audio_stream_url, stream_audio, write_audio_stream},
     voice::{

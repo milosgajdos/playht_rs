@@ -8,7 +8,9 @@ use crate::{
     api::Client,
     prelude::*,
 };
+use bytes::Bytes;
 use serde::{Deserialize, Serialize};
+use tokio_stream::Stream;
 
 /// URL path for creating and fetching async TTS jobs.
 pub const TTS_JOB_PATH: &str = "/tts";
@@ -102,10 +104,10 @@ pub async fn create_tts_job(req: TTSJobReq) -> Result<TTSJob> {
     Ok(tts_job)
 }
 
-/// Creates a new TTS job and immediately streams its progress.
+/// Create an async TTS job and immediately writes its progress to the given writer.
 /// The job progress stream URL is returned if the job gets successfully created.
 /// Convenience method which does the same thing as [`crate::api::Client::create_tts_job_with_progress_stream`].
-pub async fn create_tts_job_with_progress_stream<W>(
+pub async fn create_tts_job_write_progress_stream<W>(
     w: &mut W,
     req: TTSJobReq,
 ) -> Result<Option<String>>
@@ -113,13 +115,13 @@ where
     W: tokio::io::AsyncWriteExt + Unpin,
 {
     let stream_url = Client::new()
-        .create_tts_job_with_progress_stream(w, req)
+        .create_tts_job_write_progress_stream(w, req)
         .await?;
 
     Ok(stream_url)
 }
 
-/// Fetches a TTS job with the given id.
+/// Fetches the TTS job with the given id.
 /// Convenience method which does the same thing as [`crate::api::Client::get_tts_job`].
 pub async fn get_tts_job(id: String) -> Result<TTSJob> {
     let tts_job = Client::new().get_tts_job(id).await?;
@@ -127,15 +129,25 @@ pub async fn get_tts_job(id: String) -> Result<TTSJob> {
     Ok(tts_job)
 }
 
-/// Streams the progress of a TTS job with the given id.
-/// Convenience method which does the same thing as [`crate::api::Client::stream_tts_job_progress`].
-pub async fn stream_tts_job_progress<W>(w: &mut W, id: String) -> Result<()>
+/// Writes the progress stream of the TTS job with the given id into the given writer.
+/// Convenience method which does the same thing as [`crate::api::Client::write_tts_job_progress_stream`].
+pub async fn write_tts_job_progress_stream<W>(w: &mut W, id: String) -> Result<()>
 where
     W: tokio::io::AsyncWriteExt + Unpin,
 {
-    Client::new().stream_tts_job_progress(w, id).await?;
+    Client::new().write_tts_job_progress_stream(w, id).await?;
 
     Ok(())
+}
+
+/// Streams the progress of the TTS job with the given id..
+/// Convenience method which does the same thing as [`crate::api::Client::stream_tts_job_progress`].
+pub async fn stream_tts_job_progress(
+    id: String,
+) -> Result<impl Stream<Item = StreamResult<Bytes>>> {
+    let stream = Client::new().stream_tts_job_progress(id).await?;
+
+    Ok(stream)
 }
 
 /// Streams audio data for the TTS job with the given id.
