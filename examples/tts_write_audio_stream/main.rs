@@ -1,4 +1,4 @@
-//! `cargo run --example tts_audio_stream -- "foobar.mp3"`
+//! `cargo run --example tts_write_audio_stream -- "foobar.mp3"`
 use playht_rs::{
     api::{self, stream::TTSStreamReq, tts::Quality},
     prelude::*,
@@ -26,7 +26,7 @@ async fn main() -> Result<()> {
     };
     let file = File::create(file_path.clone()).await?;
     let mut w = BufWriter::new(file);
-    client.stream_audio(&mut w, req).await?;
+    client.write_audio_stream(&mut w, req).await?;
     println!("Done streaming into {}", file_path);
 
     Ok(())

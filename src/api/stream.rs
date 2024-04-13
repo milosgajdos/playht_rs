@@ -7,7 +7,9 @@ use crate::{
     api::Client,
     prelude::*,
 };
+use bytes::Bytes;
 use serde::{Deserialize, Serialize};
+use tokio_stream::Stream;
 
 /// URL path for fetching the audio streams.
 pub const TTS_STREAM_PATH: &str = "/tts/stream";
@@ -62,13 +64,13 @@ pub struct TTSStreamURL {
     pub description: String,
 }
 
-/// Stream raw audio data.
-/// This is a convenience function that does the same thing as [`crate::api::Client::stream_audio`].
-pub async fn stream_audio<W>(w: &mut W, req: TTSStreamReq) -> Result<()>
+/// Stream raw TTS audio into the given writer.
+/// This is a convenience function that does the same thing as [`crate::api::Client::write_audio_stream`].
+pub async fn write_audio_stream<W>(w: &mut W, req: TTSStreamReq) -> Result<()>
 where
     W: tokio::io::AsyncWriteExt + Unpin,
 {
-    Client::new().stream_audio(w, req).await?;
+    Client::new().write_audio_stream(w, req).await?;
 
     Ok(())
 }
@@ -79,4 +81,12 @@ pub async fn get_audio_stream_url(req: TTSStreamReq) -> Result<TTSStreamURL> {
     let audio_stream_url = Client::new().get_audio_stream_url(req).await?;
 
     Ok(audio_stream_url)
+}
+
+/// Stream TTS audio using the returned stream.
+/// This is a convenience function that does the same thing as [`crate::api::Client::stream_audio`].
+pub async fn stream_audio(req: TTSStreamReq) -> Result<impl Stream<Item = StreamResult<Bytes>>> {
+    let audio_stream = Client::new().stream_audio(req).await?;
+
+    Ok(audio_stream)
 }

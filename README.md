@@ -45,13 +45,13 @@ There are quite a few examples available in the [examples](./examples) directory
 
 ### Clone Voice
 
-This example demonstrates how you can clone a new voice from a sample audio file.
+Clone a new voice from a sample audio file.
 
 > [!NOTE]
 > You must pass the sample file and the mime type as cli arguments
 
 ```rust
-//! `cargo run --example get_voices`
+//! `cargo run --example clone_voices`
 use playht_rs::{
     api::{self, voice::CloneVoiceFileRequest, voice::DeleteClonedVoiceRequest},
     prelude::*,
@@ -88,10 +88,10 @@ async fn main() -> Result<()> {
 
 ### Creat async TTS Jobs
 
-This example demonstrates how you can create an async TTS job.
+Create an async TTS job and fetch its metadata.
 
 > [!NOTE]
-> The async TTS job progress can be monitored via the API.
+> The async TTS job progress can be monitored via the PlayHT API.
 
 ```rust
 //! `cargo run --example tts_jobs`
@@ -128,16 +128,16 @@ async fn main() -> Result<()> {
 }
 ```
 
-### Stream TTS Audio in real-time
+### Stream TTS Audio
 
-This example demonstrates how you can stream the TTS audio in real-time.
-In this case we are storing it in a file specified via a cli argument but you can pass in any async writer implementation such as an audio device tokio wrapper, etc.
+Stream TTS audio in real-time into a file.
+The file is provided via a cli argument but you can pass async writer implementation such as an audio device tokio wrapper, etc.
 
 > [!NOTE]
 > You must pass the output file path as cli argument.
 
 ```rust
-//! `cargo run --example tts_audio_stream -- "foobar.mp3"`
+//! `cargo run --example tts_write_audio_stream -- "foobar.mp3"`
 use playht_rs::{
     api::{self, stream::TTSStreamReq, tts::Quality},
     prelude::*,
@@ -165,14 +165,14 @@ async fn main() -> Result<()> {
     };
     let file = File::create(file_path.clone()).await?;
     let mut w = BufWriter::new(file);
-    client.stream_audio(&mut w, req).await?;
+    client.write_audio_stream(&mut w, req).await?;
     println!("Done streaming into {}", file_path);
 
     Ok(())
 }
 ```
 
-### Play the generated TTS file
+### Play the TTS audio from a file
 
 ```rust
 //! `cargo run --example play_audio -- "/path/to/audio.mp3"`
@@ -192,10 +192,16 @@ fn main() {
 }
 ```
 
-### Play the real-time TTS stream
+### Play TTS audio stream data
+
+> [!NOTE]
+> This does NOT actually do streaming playback!
+> It feteches all the data into a buffer and then sends it
+> for the playback. If you need a real-time playback stream
+> check the `tts_stream_audio` example below.
 
 ```rust
-//! `cargo run --example play_tts_audio_stream`
+//! `cargo run --example tts_play_audio_stream`
 use playht_rs::{
     api::{self, stream::TTSStreamReq, tts::Quality},
     prelude::*,
@@ -224,12 +230,87 @@ async fn main() -> Result<()> {
     let sink = Sink::try_new(&stream_handle).unwrap();
 
     let mut buffer = Vec::new();
-    client.stream_audio(&mut buffer, req).await?;
+    client.write_audio_stream(&mut buffer, req).await?;
 
     let source = Decoder::new(Cursor::new(buffer)).unwrap();
     sink.append(source);
     sink.sleep_until_end();
 
+    Ok(())
+}
+```
+
+### Stream TTS audio in real-time
+
+```rust
+//! ` cargo run --example tts_stream_audio`
+use bytes::BytesMut;
+use playht_rs::{
+    api::{self, stream::TTSStreamReq, tts::Quality},
+    prelude::*,
+};
+use rodio::{Decoder, OutputStream, Sink};
+use std::io::Cursor;
+use tokio_stream::StreamExt;
+
+// NOTE: this might need to be adjusted
+const BUFFER_SIZE: usize = 1024 * 10;
+
+#[tokio::main]
+async fn main() -> Result<()> {
+    let client = api::Client::new();
+    let voices = client.get_stock_voices().await?;
+    if voices.is_empty() {
+        return Err("No voices available for playback".into());
+    }
+    let client = api::Client::new();
+    let req = TTSStreamReq {
+        text: Some("What is life?".to_owned()),
+        voice: Some(voices[0].id.to_owned()),
+        quality: Some(Quality::Low),
+        speed: Some(1.0),
+        sample_rate: Some(24000),
+        ..Default::default()
+    };
+
+    let (_stream, stream_handle) = OutputStream::try_default().unwrap();
+    let sink = Sink::try_new(&stream_handle).unwrap();
+
+    let mut stream = client.stream_audio(req).await?;
+    let mut accumulated = BytesMut::new();
+
+    while let Some(res) = stream.next().await {
+        match res {
+            Ok(chunk) => {
+                accumulated.extend_from_slice(&chunk);
+                // Check if there's enough data to attempt decoding
+                if accumulated.len() > BUFFER_SIZE {
+                    let cursor = Cursor::new(accumulated.clone().freeze().to_vec());
+                    match Decoder::new(cursor) {
+                        Ok(source) => {
+                            sink.append(source);
+                            accumulated.clear(); // Clear the buffer on successful append
+                        }
+                        Err(e) => {
+                            eprintln!("Failed to decode received audio: {}", e);
+                        }
+                    }
+                }
+            }
+            Err(err) => return Err(format!("Playback error: {}", err).into()),
+        }
+    }
+
+    // Flush any remaining data at the end
+    if !accumulated.is_empty() {
+        let cursor = Cursor::new(accumulated.to_vec());
+        match Decoder::new(cursor) {
+            Ok(source) => sink.append(source),
+            Err(e) => println!("Remaining data could not be decoded: {}", e),
+        }
+    }
+
+    sink.sleep_until_end();
     Ok(())
 }
 ```

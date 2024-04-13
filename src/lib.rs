@@ -12,7 +12,7 @@ pub use crate::api::{
         create_tts_job, create_tts_job_with_progress_stream, get_tts_job, stream_tts_job_audio,
         stream_tts_job_progress,
     },
-    stream::{get_audio_stream_url, stream_audio},
+    stream::{get_audio_stream_url, stream_audio, write_audio_stream},
     voice::{
         clone_voice_from_file, clone_voice_from_url, delete_cloned_voice, get_cloned_voices,
         get_stock_voices,

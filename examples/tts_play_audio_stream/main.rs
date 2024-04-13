@@ -1,4 +1,4 @@
-//! `cargo run --example play_tts_audio_stream`
+//! `cargo run --example tts_play_audio_stream`
 use playht_rs::{
     api::{self, stream::TTSStreamReq, tts::Quality},
     prelude::*,
@@ -27,7 +27,7 @@ async fn main() -> Result<()> {
     let sink = Sink::try_new(&stream_handle).unwrap();
 
     let mut buffer = Vec::new();
-    client.stream_audio(&mut buffer, req).await?;
+    client.write_audio_stream(&mut buffer, req).await?;
 
     let source = Decoder::new(Cursor::new(buffer)).unwrap();
     sink.append(source);
