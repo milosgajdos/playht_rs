@@ -41,12 +41,12 @@ name = "tts_jobs"
 path = "examples/tts_jobs/main.rs"
 
 [[example]]
-name = "tts_job_progress"
-path = "examples/tts_job_progress/main.rs"
+name = "tts_write_job_progress_stream"
+path = "examples/tts_write_job_progress_stream/main.rs"
 
 [[example]]
-name = "tts_job_audio_stream"
-path = "examples/tts_job_audio_stream/main.rs"
+name = "tts_job_write_audio_stream"
+path = "examples/tts_job_write_audio_stream/main.rs"
 
 [[example]]
 name = "tts_play_audio_stream"

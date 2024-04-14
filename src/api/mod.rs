@@ -2,14 +2,16 @@
 //!
 //! Use the [`Client`] for interacing with the playht API.
 //! You can configure and build the [`Client`] with [`ClientBuilder`].
-//! Note that the [`Client`] implementation is async -- it leverages [`tokio`] runtime,
-//! so in order to use it you must do the same.
+//! Note that the [`Client`] implementation is async. It leverages the [`tokio`]
+//! runtime, so in order to use it you must do the same!
 //!
 //! There are a few submodules, each of which defines various data structures
-//! leveraged by the [`Client`]. Each module also provides a simple oone-off
-//! functions that create the one-off instance(s) of the [`Client`] underneath.
-//! If you need just a specific functionality, such as cloning a voice,
-//!  you might want to use those modules instead of creating the client, etc.
+//! used by the [`Client`]. Each module also provides a simple one-off
+//! functions that create one-off [`Client`] instance(s) underneath.
+//! If you need just a simple one-off call, such as when cloning a voice,
+//! you might want to use those modules instead of creating the client, etc.
+//! You want to create your own instance of client if you want to reuse it
+//! across many different API calls instead of creating new instances every time.
 //!
 
 pub mod job;
@@ -39,7 +41,7 @@ use voice::{
 pub const BASE_URL: &str = "https://api.play.ht/api";
 /// V2 API URL path.
 const V2_PATH: &str = "/v2";
-// TODO: this is used for gRPC streaming
+// TODO: this is used for gRPC streaming.
 // Remove this attribute once implemented.
 #[allow(unused)]
 /// V1 API URL path.
@@ -183,7 +185,7 @@ impl Client {
         Err(Box::new(Error::APIError(api_error)))
     }
 
-    /// Create a voice clone from a URL specified in the [`request`][voice::CloneVoiceURLRequest].
+    /// Create a voice clone from the URL specified in the [`request`][voice::CloneVoiceURLRequest].
     /// See the [official docs](https://docs.play.ht/reference/api-create-instant-voice-clone-via-file-url).
     pub async fn clone_voice_from_url(&self, req: CloneVoiceURLRequest) -> Result<ClonedVoice> {
         let body = serde_json::to_string(&req)?;
@@ -257,11 +259,11 @@ impl Client {
         Err(Box::new(Error::APIError(api_error)))
     }
 
-    /// Create an async TTS job and immediately stream the progres into the given writer.
+    /// Create an async TTS job and immediately writes its progress to the given writer.
     /// See the [official docs](https://docs.play.ht/reference/api-generate-audio).
-    /// NOTE: The stream written into the given writer contains SSE events
-    /// reporting the progress of the async job.
-    pub async fn create_tts_job_with_progress_stream<W>(
+    /// NOTE: The stream written into the writer contains SSE events
+    /// reporting the progress of the job.
+    pub async fn create_tts_job_write_progress_stream<W>(
         &self,
         w: &mut W,
         req: TTSJobReq,
@@ -293,7 +295,7 @@ impl Client {
         Ok(stream_url)
     }
 
-    /// Query the async TTS job and return it.
+    /// Query the TTS job and return its metadata.
     /// See the [official docs](https://docs.play.ht/reference/api-get-tts-data).
     pub async fn get_tts_job(&self, id: String) -> Result<TTSJob> {
         let tts_job_url = format!("{}{}/{}", self.url.as_str(), TTS_JOB_PATH, id);
@@ -314,11 +316,11 @@ impl Client {
         Err(Box::new(Error::APIError(api_error)))
     }
 
-    /// Stream the progress of the TTS job with the given id.
-    /// Unlike [`Client::create_tts_job_with_progress_stream`] this doe NOT
-    /// create a new TTS job, but merely streams the SSE events about its progress.
+    /// Writes the progress stream the TTS job with the given id into the given writer.
+    /// Unlike [`Client::create_tts_job_with_progress_stream`] this does NOT
+    /// create a new job, but merely writes the SSE events stream into the given writer.
     /// See the [official docs](https://docs.play.ht/reference/api-get-tts-data).
-    pub async fn stream_tts_job_progress<W>(&self, w: &mut W, id: String) -> Result<()>
+    pub async fn write_tts_job_progress_stream<W>(&self, w: &mut W, id: String) -> Result<()>
     where
         W: tokio::io::AsyncWriteExt + Unpin,
     {
@@ -336,6 +338,25 @@ impl Client {
         }
 
         Ok(())
+    }
+
+    /// Stream the TTS job progress.
+    /// Unlike [`Client::write_tts_job_progress_stream`] this returns the job progress stream
+    /// to the consumer. The stream streams SSE events reporting the TTS job progress.
+    pub async fn stream_tts_job_progress(
+        &self,
+        id: String,
+    ) -> Result<impl Stream<Item = StreamResult<Bytes>>> {
+        let tts_job_url = format!("{}{}/{}", self.url.as_str(), TTS_JOB_PATH, id);
+        let resp = self
+            .client
+            .get(tts_job_url)
+            .headers(self.headers.clone())
+            .header(ACCEPT, TEXT_EVENT_STREAM)
+            .send()
+            .await?;
+
+        Ok(resp.bytes_stream())
     }
 
     /// Stream the audio from the TTS job in real time.
@@ -418,7 +439,7 @@ impl Client {
     }
 
     /// Stream raw TTS audio.
-    /// Unlike [`write_audio_stream`] this method returns an async stream object
+    /// Unlike [`Client::write_audio_stream`] this method returns an async stream object
     /// that streams raw audio. This way the consumer is in control of streaming.
     /// See the [official docs](https://docs.play.ht/reference/api-generate-tts-audio-stream).
     pub async fn stream_audio(

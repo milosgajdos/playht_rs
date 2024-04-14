@@ -86,7 +86,7 @@ async fn main() -> Result<()> {
 }
 ```
 
-### Creat async TTS Jobs
+### Create async TTS Jobs
 
 Create an async TTS job and fetch its metadata.
 
