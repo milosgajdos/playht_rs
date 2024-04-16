@@ -1,6 +1,6 @@
 [package]
 name = "playht_rs"
-version = "0.0.2"
+version = "0.1.0"
 description = "A library for interacting with play.ht API"
 keywords = ["playht", "tts", "text-to-speech", "ai"]
 categories = ["web-programming::http-client"]
