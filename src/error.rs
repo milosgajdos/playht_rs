@@ -12,28 +12,30 @@ pub enum Error {
     ClientBuildError(String),
     #[error("API error")]
     APIError(APIError),
+    #[error("Unknown error: {0}")]
+    Other(UnknownError),
 }
 
 /// Deserialized API Errors as returned by play.ht API.
 ///
 /// play.ht returns 3 different types of errors
 /// * [`Gen`][g] - a generic JSON serialized error with strict schema.
-/// * [`Internal`][i] - a JSON serialized error returned when 50x status codes.
-/// * [`RateLimit`][r] - a simple string informing you you've hit rate limit quota.
+/// * [`Internal`][i] - a JSON serialized error returned when 50x status codes are returned.
+/// * [`RateLimit`][r] - a simple string informing you you've hit the API rate limit quota.
 ///
 /// [g]: APIError::Gen
 /// [i]: APIError::Internal
 /// [r]: APIError::RateLimit
 #[derive(Debug, thiserror::Error)]
 pub enum APIError {
-    #[error("Generic API error: {error_message} ({error_id})")]
+    #[error("{error_message} ({error_id})")]
     Gen {
         error_message: String,
         error_id: String,
     },
-    #[error("Internal API error: {message} ({error})")]
+    #[error("{message} ({error})")]
     Internal { message: String, error: String },
-    #[error("Rate limit exceeded: {0}")]
+    #[error("Rate limit: {0}")]
     RateLimit(String),
 }
 
@@ -71,3 +73,16 @@ impl<'de> Deserialize<'de> for APIError {
         Err(serde::de::Error::custom("Unknown API error format"))
     }
 }
+
+#[derive(Debug, Deserialize)]
+pub struct UnknownError {
+    description: String,
+}
+
+impl std::fmt::Display for UnknownError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.description)
+    }
+}
+
+impl std::error::Error for UnknownError {}
