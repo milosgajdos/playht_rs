@@ -26,7 +26,7 @@ async fn main() -> Result<()> {
     };
     let file = File::create(file_path.clone()).await?;
     let mut w = BufWriter::new(file);
-    client.write_audio_stream(&mut w, req).await?;
+    client.write_audio_stream(&mut w, &req).await?;
     println!("Done streaming into {}", file_path);
 
     Ok(())

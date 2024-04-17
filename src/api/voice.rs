@@ -65,7 +65,7 @@ pub struct DeleteClonedVoiceResp {
     pub deleted: ClonedVoice,
 }
 
-/// Get all available stock voices.
+/// Fetches all available stock voices.
 /// Convenience function that does the same thing as [`crate::api::Client::get_stock_voices`].
 pub async fn get_stock_voices() -> Result<Vec<Voice>> {
     let voices = Client::new().get_stock_voices().await?;
@@ -73,7 +73,7 @@ pub async fn get_stock_voices() -> Result<Vec<Voice>> {
     Ok(voices)
 }
 
-/// Get all cloned voices.
+/// Fetches all cloned voices.
 /// Convenience function that does the same thing as [`crate::api::Client::get_cloned_voices`].
 pub async fn get_cloned_voices() -> Result<Vec<ClonedVoice>> {
     let voices = Client::new().get_cloned_voices().await?;
@@ -81,25 +81,25 @@ pub async fn get_cloned_voices() -> Result<Vec<ClonedVoice>> {
     Ok(voices)
 }
 
-/// Clone voice from the give file.
+/// Clones a voice from the given file.
 /// Convenience function that does the same thing as [`crate::api::Client::clone_voice_from_file`].
-pub async fn clone_voice_from_file(req: CloneVoiceFileRequest) -> Result<ClonedVoice> {
+pub async fn clone_voice_from_file(req: &CloneVoiceFileRequest) -> Result<ClonedVoice> {
     let voice = Client::new().clone_voice_from_file(req).await?;
 
     Ok(voice)
 }
 
-/// Clone voice from the given URL.
+/// Clones a voice from the given URL.
 /// Convenience function that does the same thing as [`crate::api::Client::clone_voice_from_url`].
-pub async fn clone_voice_from_url(req: CloneVoiceURLRequest) -> Result<ClonedVoice> {
+pub async fn clone_voice_from_url(req: &CloneVoiceURLRequest) -> Result<ClonedVoice> {
     let voice = Client::new().clone_voice_from_url(req).await?;
 
     Ok(voice)
 }
 
-/// Delete cloned voice.
+/// Delete a cloned voice.
 /// Convenience function that does the same thing as [`crate::api::Client::delete_cloned_voice`].
-pub async fn delete_cloned_voice(req: DeleteClonedVoiceRequest) -> Result<DeleteClonedVoiceResp> {
+pub async fn delete_cloned_voice(req: &DeleteClonedVoiceRequest) -> Result<DeleteClonedVoiceResp> {
     let delete_resp = Client::new().delete_cloned_voice(req).await?;
 
     Ok(delete_resp)

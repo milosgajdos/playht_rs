@@ -31,7 +31,7 @@ async fn main() -> Result<()> {
     let (_stream, stream_handle) = OutputStream::try_default().unwrap();
     let sink = Sink::try_new(&stream_handle).unwrap();
 
-    let mut stream = client.stream_audio(req).await?;
+    let mut stream = client.stream_audio(&req).await?;
     let mut accumulated = BytesMut::new();
 
     while let Some(res) = stream.next().await {

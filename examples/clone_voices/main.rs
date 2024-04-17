@@ -19,14 +19,14 @@ async fn main() -> Result<()> {
 
     let client = api::Client::new();
 
-    let voice = client.clone_voice_from_file(req).await?;
+    let voice = client.clone_voice_from_file(&req).await?;
     println!("Got voice clone: {:?}", voice);
 
     let cloned_voices = client.get_cloned_voices().await?;
     println!("Got voice clones: {:?}", cloned_voices);
 
     let req = DeleteClonedVoiceRequest { voice_id: voice.id };
-    let delete_resp = client.delete_cloned_voice(req).await?;
+    let delete_resp = client.delete_cloned_voice(&req).await?;
     println!("Got delete response: {:?}", delete_resp);
 
     Ok(())

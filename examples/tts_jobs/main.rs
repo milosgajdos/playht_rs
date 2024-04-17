@@ -22,7 +22,7 @@ async fn main() -> Result<()> {
         ..Default::default()
     };
 
-    let tts_job = client.create_tts_job(req).await?;
+    let tts_job = client.create_tts_job(&req).await?;
     println!("TTS job created: {:?}", tts_job);
 
     let tts_job = client.get_tts_job(tts_job.id).await?;
