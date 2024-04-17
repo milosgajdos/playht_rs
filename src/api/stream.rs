@@ -64,9 +64,9 @@ pub struct TTSStreamURL {
     pub description: String,
 }
 
-/// Stream raw TTS audio into the given writer.
+/// Writes TTS audio into the given writer.
 /// This is a convenience function that does the same thing as [`crate::api::Client::write_audio_stream`].
-pub async fn write_audio_stream<W>(w: &mut W, req: TTSStreamReq) -> Result<()>
+pub async fn write_audio_stream<W>(w: &mut W, req: &TTSStreamReq) -> Result<()>
 where
     W: tokio::io::AsyncWriteExt + Unpin,
 {
@@ -75,17 +75,17 @@ where
     Ok(())
 }
 
-/// Fetch the URL for audio stream.
+/// Fetches the URL for the audio stream.
 /// This is a convenience function that does the same thing as [`crate::api::Client::get_audio_stream_url`].
-pub async fn get_audio_stream_url(req: TTSStreamReq) -> Result<TTSStreamURL> {
+pub async fn get_audio_stream_url(req: &TTSStreamReq) -> Result<TTSStreamURL> {
     let audio_stream_url = Client::new().get_audio_stream_url(req).await?;
 
     Ok(audio_stream_url)
 }
 
-/// Stream TTS audio using the returned stream.
+/// Streams raw TTS audio.
 /// This is a convenience function that does the same thing as [`crate::api::Client::stream_audio`].
-pub async fn stream_audio(req: TTSStreamReq) -> Result<impl Stream<Item = StreamResult<Bytes>>> {
+pub async fn stream_audio(req: &TTSStreamReq) -> Result<impl Stream<Item = StreamResult<Bytes>>> {
     let audio_stream = Client::new().stream_audio(req).await?;
 
     Ok(audio_stream)

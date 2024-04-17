@@ -96,20 +96,20 @@ pub struct TTSJob {
     pub links: Option<Vec<Link>>,
 }
 
-/// Creates a new TTS job.
+/// Creates a new async TTS job.
 /// Convenience method which does the same thing as [`crate::api::Client::create_tts_job`].
-pub async fn create_tts_job(req: TTSJobReq) -> Result<TTSJob> {
+pub async fn create_tts_job(req: &TTSJobReq) -> Result<TTSJob> {
     let tts_job = Client::new().create_tts_job(req).await?;
 
     Ok(tts_job)
 }
 
-/// Create an async TTS job and immediately writes its progress to the given writer.
+/// Creates an async TTS job and immediately writes its progress to the given writer.
 /// The job progress stream URL is returned if the job gets successfully created.
 /// Convenience method which does the same thing as [`crate::api::Client::create_tts_job_with_progress_stream`].
 pub async fn create_tts_job_write_progress_stream<W>(
     w: &mut W,
-    req: TTSJobReq,
+    req: &TTSJobReq,
 ) -> Result<Option<String>>
 where
     W: tokio::io::AsyncWriteExt + Unpin,
@@ -150,13 +150,13 @@ pub async fn stream_tts_job_progress(
     Ok(stream)
 }
 
-/// Streams audio data for the TTS job with the given id.
-/// Convenience method which does the same thing as [`crate::api::Client::stream_tts_job_audio`].
-pub async fn stream_tts_job_audio<W>(w: &mut W, id: String) -> Result<()>
+/// Writes the audio stream of the TTS job with the given id to the given writer.
+/// Convenience method which does the same thing as [`crate::api::Client::write_tts_job_audio_stream`].
+pub async fn write_tts_job_audio_stream<W>(w: &mut W, id: String) -> Result<()>
 where
     W: tokio::io::AsyncWriteExt + Unpin,
 {
-    Client::new().stream_tts_job_audio(w, id).await?;
+    Client::new().write_tts_job_audio_stream(w, id).await?;
 
     Ok(())
 }

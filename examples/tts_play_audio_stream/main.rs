@@ -27,7 +27,7 @@ async fn main() -> Result<()> {
     let sink = Sink::try_new(&stream_handle).unwrap();
 
     let mut buffer = Vec::new();
-    client.write_audio_stream(&mut buffer, req).await?;
+    client.write_audio_stream(&mut buffer, &req).await?;
 
     let source = Decoder::new(Cursor::new(buffer)).unwrap();
     sink.append(source);

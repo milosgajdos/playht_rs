@@ -22,7 +22,7 @@ async fn main() -> Result<()> {
     let file = File::create(file_path.clone()).await?;
     let mut w = BufWriter::new(file);
     api::Client::new()
-        .stream_tts_job_audio(&mut w, job_id)
+        .write_tts_job_audio_stream(&mut w, job_id)
         .await?;
 
     println!("Done streaming into {}", file_path);
