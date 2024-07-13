@@ -376,7 +376,6 @@ impl Client {
             .client
             .get(tts_job_url)
             .headers(self.headers.clone())
-            .header(ACCEPT, AUDIO_MPEG)
             .send()
             .await?;
 
@@ -404,7 +403,6 @@ impl Client {
             .body(body)
             .headers(self.headers.clone())
             .header(CONTENT_TYPE, APPLICATION_JSON)
-            .header(ACCEPT, AUDIO_MPEG)
             .send()
             .await?;
 
@@ -458,7 +456,6 @@ impl Client {
             .body(body)
             .headers(self.headers.clone())
             .header(CONTENT_TYPE, APPLICATION_JSON)
-            .header(ACCEPT, AUDIO_MPEG)
             .send()
             .await?;
 
